@@ -205,6 +205,109 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  // --- Sidebar Navigation ---
+  const navDashboard = document.getElementById("nav-dashboard");
+  const navSearch = document.getElementById("nav-search");
+  const navAutomation = document.getElementById("nav-automation");
+  const navStats = document.getElementById("nav-stats");
+  const navSettings = document.getElementById("nav-settings");
+  const navLogout = document.getElementById("nav-logout");
+
+  function setActiveNav(element) {
+    document.querySelectorAll(".nav-item").forEach((el) => {
+      el.classList.remove("active");
+    });
+    if (element) element.classList.add("active");
+  }
+
+  if (navDashboard) {
+    navDashboard.addEventListener("click", (e) => {
+      e.preventDefault();
+      setActiveNav(navDashboard);
+      // If we are not on the dashboard (index), go there.
+      // Since this is a SPA-like feel but with multi-pages, we check pathname
+      if (window.location.pathname !== "/") {
+        window.location.href = "/";
+      } else {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    });
+  }
+
+  if (navSearch) {
+    navSearch.addEventListener("click", (e) => {
+      e.preventDefault();
+      setActiveNav(navSearch);
+      if (window.location.pathname !== "/") {
+        window.location.href = "/?action=search";
+      } else {
+        summonerNameInput.focus();
+        summonerNameInput.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    });
+  }
+
+  if (navAutomation) {
+    navAutomation.addEventListener("click", (e) => {
+      e.preventDefault();
+      setActiveNav(navAutomation);
+      if (window.location.pathname !== "/") {
+        window.location.href = "/?action=automation";
+      } else {
+        const automationHub = document.getElementById("automation-hub");
+        if (automationHub) {
+          automationHub.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+    });
+  }
+
+  if (navStats) {
+    navStats.addEventListener("click", (e) => {
+      e.preventDefault();
+      setActiveNav(navStats);
+      window.location.href = "/live_game";
+    });
+  }
+
+  if (navSettings) {
+    navSettings.addEventListener("click", (e) => {
+      e.preventDefault();
+      setActiveNav(navSettings);
+      showInlineMessage("设置功能开发中...", { level: "info" });
+    });
+  }
+
+  if (navLogout) {
+    navLogout.addEventListener("click", (e) => {
+      e.preventDefault();
+      showInlineMessage("退出功能暂不可用", { level: "warn" });
+    });
+  }
+
+  // Check URL params for actions (e.g. coming from another page)
+  const urlParams = new URLSearchParams(window.location.search);
+  const action = urlParams.get("action");
+  if (action === "search") {
+    setTimeout(() => {
+        setActiveNav(navSearch);
+        summonerNameInput.focus();
+        summonerNameInput.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 500);
+  } else if (action === "automation") {
+    setTimeout(() => {
+        setActiveNav(navAutomation);
+        const automationHub = document.getElementById("automation-hub");
+        if (automationHub) {
+            automationHub.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    }, 500);
+  } else if (window.location.pathname === "/live_game") {
+      setActiveNav(navStats);
+  } else if (window.location.pathname === "/") {
+      setActiveNav(navDashboard);
+  }
+
   let autoAcceptRunning = false;
   let autoAnalyzeRunning = false;
   let autoBanPickRunning = false;

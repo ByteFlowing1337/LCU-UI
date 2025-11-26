@@ -107,6 +107,33 @@ export function showNotification(message, type = "info", duration = 3000) {
 }
 
 export function setLCUStatus(message, style = "neutral") {
+  // Update new UI status pill
+  const statusPill = document.querySelector(".status-pill");
+  if (statusPill) {
+    const dot = statusPill.querySelector(".status-dot");
+    const text = statusPill.querySelector("span");
+
+    if (style === "ok") {
+      statusPill.style.background = "rgba(16, 185, 129, 0.1)";
+      statusPill.style.borderColor = "rgba(16, 185, 129, 0.2)";
+      statusPill.style.color = "#10b981";
+      if (dot) dot.style.background = "#10b981";
+      if (text) text.textContent = "LCU Connected";
+    } else if (style === "err") {
+      statusPill.style.background = "rgba(239, 68, 68, 0.1)";
+      statusPill.style.borderColor = "rgba(239, 68, 68, 0.2)";
+      statusPill.style.color = "#ef4444";
+      if (dot) dot.style.background = "#ef4444";
+      if (text) text.textContent = "LCU Disconnected";
+    } else {
+      statusPill.style.background = "rgba(100, 116, 139, 0.1)";
+      statusPill.style.borderColor = "rgba(100, 116, 139, 0.2)";
+      statusPill.style.color = "#94a3b8";
+      if (dot) dot.style.background = "#94a3b8";
+      if (text) text.textContent = "Connecting...";
+    }
+  }
+
   if (style === "ok") {
     lcuConnectionState = "ok";
   } else if (style === "err") {
