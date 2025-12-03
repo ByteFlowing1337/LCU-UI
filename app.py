@@ -25,8 +25,18 @@ def create_app():
     Returns:
         tuple: (app, socketio)
     """
-    # 初始化Flask应用
-    app = Flask(__name__)
+    import sys
+    
+    # 兼容 PyInstaller 打包环境
+    if getattr(sys, 'frozen', False):
+        # 打包后，资源在 sys._MEIPASS 目录
+        base_path = sys._MEIPASS
+        template_folder = os.path.join(base_path, 'templates')
+        static_folder = os.path.join(base_path, 'static')
+        app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
+    else:
+        # 正常开发环境
+        app = Flask(__name__)
     
     # 注册蓝图
     app.register_blueprint(page_bp)  # 页面渲染路由

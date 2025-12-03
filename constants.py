@@ -45,8 +45,15 @@ else:
 _data_cache = {}
 
 def _get_data_path():
-    """获取data目录的绝对路径"""
-    return os.path.join(os.path.dirname(__file__), 'data')
+    """获取data目录的绝对路径（兼容 PyInstaller 打包环境）"""
+    import sys
+    if getattr(sys, 'frozen', False):
+        # PyInstaller 打包后，资源在 sys._MEIPASS 临时目录中
+        base_path = sys._MEIPASS
+    else:
+        # 正常运行时，使用脚本所在目录
+        base_path = os.path.dirname(__file__)
+    return os.path.join(base_path, 'data')
 
 @lru_cache(maxsize=None)
 def _load_json_file(filename):
