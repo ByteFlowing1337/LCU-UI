@@ -28,7 +28,12 @@
           <i class="bi bi-lightning-charge-fill text-primary fs-2"></i>
         </div>
         <div class="sidebar-nav">
-          <a href="#" id="nav-dashboard" class="nav-item active" title="Dashboard">
+          <a
+            href="#"
+            id="nav-dashboard"
+            class="nav-item active"
+            title="Dashboard"
+          >
             <i class="bi bi-house-door"></i>
           </a>
           <a href="#" id="nav-search" class="nav-item" title="Search">
@@ -68,12 +73,20 @@
         <header class="dashboard-header">
           <div class="welcome-text">
             <h1>Dashboard</h1>
-            <p class="text-muted">Welcome back, Summoner</p>
+            <p class="text-muted">
+              Welcome back, {{ current_summoner.displayName if current_summoner
+              else 'Summoner' }}
+            </p>
           </div>
           <div class="header-actions d-flex gap-3">
-            <div class="status-pill">
+            <div
+              class="status-pill {% if not lcu_connected %}disconnected{% endif %}"
+            >
               <div class="status-dot"></div>
-              <span>LCU Connected</span>
+              <span
+                >{{ 'LCU Connected' if lcu_connected else 'LCU Disconnected'
+                }}</span
+              >
             </div>
           </div>
         </header>
@@ -107,34 +120,37 @@
             </section>
 
             <!-- Recent Activity -->
-            <section class="search-card">
+            <section class="search-card" id="recent-activity-section">
               <h3 class="h5 mb-3 text-primary">
                 <i class="bi bi-activity me-2"></i>Recent Activity
               </h3>
+              {% if lcu_connected and recent_games %}
               <div class="recent-activity-list">
-                <!-- Placeholder Items -->
+                {% for game in recent_games %}
                 <div class="activity-item">
-                  <div class="activity-badge badge-victory">Victory</div>
+                  <div
+                    class="activity-badge {{ 'badge-victory' if game.win else 'badge-defeat' }}"
+                  >
+                    {{ 'Victory' if game.win else 'Defeat' }}
+                  </div>
                   <div class="d-flex flex-column">
-                    <span class="fw-bold">Ranked Solo/Duo</span>
-                    <span class="text-muted small">2 hours ago</span>
+                    <span class="fw-bold">{{ game.queue_name }}</span>
+                    <span class="text-muted small">{{ game.time_ago }}</span>
                   </div>
                 </div>
-                <div class="activity-item">
-                  <div class="activity-badge badge-victory">Victory</div>
-                  <div class="d-flex flex-column">
-                    <span class="fw-bold">Ranked Solo/Duo</span>
-                    <span class="text-muted small">2 hours ago</span>
-                  </div>
-                </div>
-                <div class="activity-item">
-                  <div class="activity-badge badge-victory">Victory</div>
-                  <div class="d-flex flex-column">
-                    <span class="fw-bold">Ranked Solo/Duo</span>
-                    <span class="text-muted small">2 hours ago</span>
-                  </div>
-                </div>
+                {% endfor %}
               </div>
+              {% elif lcu_connected %}
+              <div class="text-center text-muted py-4">
+                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                <p class="mb-0">No recent games found</p>
+              </div>
+              {% else %}
+              <div class="text-center text-muted py-4">
+                <i class="bi bi-wifi-off fs-1 d-block mb-2"></i>
+                <p class="mb-0">Connect to LCU to view recent activity</p>
+              </div>
+              {% endif %}
             </section>
           </div>
 

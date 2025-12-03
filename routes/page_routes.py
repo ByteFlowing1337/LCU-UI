@@ -14,7 +14,104 @@ page_bp = Blueprint('pages', __name__)
 @page_bp.route('/')
 def index():
     """渲染主页面"""
-    return render_template('index.html')
+    lcu_connected = app_state.is_lcu_connected()
+    recent_games = []
+    current_summoner = None
+    
+    if lcu_connected:
+        try:
+            token = app_state.lcu_credentials["auth_token"]
+            port = app_state.lcu_credentials["app_port"]
+            
+            # 获取当前登录的召唤师信息
+            current_summoner_data = lcu.get_current_summoner(token, port)
+            if current_summoner_data:
+                current_summoner = {
+                    'displayName': current_summoner_data.get('gameName', '') + '#' + current_summoner_data.get('tagLine', ''),
+                    'profileIconId': current_summoner_data.get('profileIconId', 29),
+                    'summonerLevel': current_summoner_data.get('summonerLevel', 0),
+                    'puuid': current_summoner_data.get('puuid', '')
+                }
+                
+                # 获取最近5场战绩
+                if current_summoner['puuid']:
+                    history = lcu.get_match_history(token, port, current_summoner['puuid'], count=5, begin_index=0)
+                    if history:
+                        games_data = history.get('games', {}).get('games', [])
+                        for game in games_data[:5]:
+                            participants = game.get('participants', [])
+                            player_stats = None
+                            for p in participants:
+                                if p.get('puuid') == current_summoner['puuid']:
+                                    player_stats = p
+                                    break
+                            
+                            if not player_stats and participants:
+                                player_stats = participants[0]
+                            
+                            win = False
+                            if player_stats:
+                                stats = player_stats.get('stats', {})
+                                win = stats.get('win', False)
+                            
+                            queue_id = game.get('queueId', 0)
+                            queue_name = _get_queue_name(queue_id)
+                            
+                            game_creation = game.get('gameCreation', 0)
+                            time_ago = _format_time_ago(game_creation)
+                            
+                            recent_games.append({
+                                'win': win,
+                                'queue_name': queue_name,
+                                'time_ago': time_ago,
+                                'champion_id': player_stats.get('championId', 0) if player_stats else 0
+                            })
+        except Exception as e:
+            print(f"Error fetching recent games: {e}")
+    
+    return render_template('index.html', 
+                          lcu_connected=lcu_connected,
+                          current_summoner=current_summoner,
+                          recent_games=recent_games)
+
+
+def _get_queue_name(queue_id):
+    """根据队列ID返回队列名称"""
+    queue_names = {
+        420: 'Ranked Solo/Duo',
+        440: 'Ranked Flex',
+        400: 'Normal Draft',
+        430: 'Normal Blind',
+        450: 'ARAM',
+        900: 'URF',
+        1700: 'Arena',
+        1900: 'URF',
+        0: 'Custom'
+    }
+    return queue_names.get(queue_id, f'Queue {queue_id}')
+
+
+def _format_time_ago(timestamp_ms):
+    """将时间戳转换为相对时间字符串"""
+    import time
+    if not timestamp_ms:
+        return 'Unknown'
+    
+    now = time.time() * 1000
+    diff_ms = now - timestamp_ms
+    diff_seconds = diff_ms / 1000
+    diff_minutes = diff_seconds / 60
+    diff_hours = diff_minutes / 60
+    diff_days = diff_hours / 24
+    
+    if diff_days >= 1:
+        return f'{int(diff_days)} day{"s" if diff_days >= 2 else ""} ago'
+    elif diff_hours >= 1:
+        return f'{int(diff_hours)} hour{"s" if diff_hours >= 2 else ""} ago'
+    elif diff_minutes >= 1:
+        return f'{int(diff_minutes)} min{"s" if diff_minutes >= 2 else ""} ago'
+    else:
+        return 'Just now'
 
 
 @page_bp.route('/summoner/<path:summoner_name>')

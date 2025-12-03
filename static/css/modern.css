@@ -813,6 +813,18 @@ h6 {
   gap: 0.5rem;
   font-weight: 500;
   font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.status-pill.disconnected {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.status-pill.disconnected .status-dot {
+  background: #ef4444;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
 }
 
 .status-dot {
