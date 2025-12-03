@@ -213,11 +213,24 @@ document.addEventListener("DOMContentLoaded", async () => {
   const navSettings = document.getElementById("nav-settings");
   const navLogout = document.getElementById("nav-logout");
 
+  // Elements for scrolling and highlighting
+  const searchCard = document.querySelector(".search-card");
+  const automationHub = document.getElementById("automation-hub");
+
   function setActiveNav(element) {
     document.querySelectorAll(".nav-item").forEach((el) => {
       el.classList.remove("active");
     });
     if (element) element.classList.add("active");
+  }
+
+  // Highlight effect for sections
+  function highlightSection(element) {
+    if (!element) return;
+    element.classList.add("section-highlight");
+    setTimeout(() => {
+      element.classList.remove("section-highlight");
+    }, 1500);
   }
 
   if (navDashboard) {
@@ -241,8 +254,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (window.location.pathname !== "/") {
         window.location.href = "/?action=search";
       } else {
+        // Scroll to search card and highlight it
+        if (searchCard) {
+          searchCard.scrollIntoView({ behavior: "smooth", block: "center" });
+          highlightSection(searchCard);
+        }
         summonerNameInput.focus();
-        summonerNameInput.scrollIntoView({ behavior: "smooth", block: "center" });
       }
     });
   }
@@ -254,9 +271,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (window.location.pathname !== "/") {
         window.location.href = "/?action=automation";
       } else {
-        const automationHub = document.getElementById("automation-hub");
+        // Scroll to automation hub and highlight it
         if (automationHub) {
           automationHub.scrollIntoView({ behavior: "smooth", block: "start" });
+          highlightSection(automationHub);
         }
       }
     });
@@ -290,22 +308,25 @@ document.addEventListener("DOMContentLoaded", async () => {
   const action = urlParams.get("action");
   if (action === "search") {
     setTimeout(() => {
-        setActiveNav(navSearch);
-        summonerNameInput.focus();
-        summonerNameInput.scrollIntoView({ behavior: "smooth", block: "center" });
+      setActiveNav(navSearch);
+      if (searchCard) {
+        searchCard.scrollIntoView({ behavior: "smooth", block: "center" });
+        highlightSection(searchCard);
+      }
+      summonerNameInput.focus();
     }, 500);
   } else if (action === "automation") {
     setTimeout(() => {
-        setActiveNav(navAutomation);
-        const automationHub = document.getElementById("automation-hub");
-        if (automationHub) {
-            automationHub.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
+      setActiveNav(navAutomation);
+      if (automationHub) {
+        automationHub.scrollIntoView({ behavior: "smooth", block: "start" });
+        highlightSection(automationHub);
+      }
     }, 500);
   } else if (window.location.pathname === "/live_game") {
-      setActiveNav(navStats);
+    setActiveNav(navStats);
   } else if (window.location.pathname === "/") {
-      setActiveNav(navDashboard);
+    setActiveNav(navDashboard);
   }
 
   let autoAcceptRunning = false;
