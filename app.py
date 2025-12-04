@@ -30,7 +30,7 @@ def create_app():
     # 兼容 PyInstaller 打包环境
     if getattr(sys, 'frozen', False):
         # 打包后，资源在 sys._MEIPASS 目录
-        base_path = sys._MEIPASS
+        base_path: str = getattr(sys, '_MEIPASS', os.path.dirname(__file__))
         template_folder = os.path.join(base_path, 'templates')
         static_folder = os.path.join(base_path, 'static')
         app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)

@@ -49,7 +49,7 @@ def _get_data_path():
     import sys
     if getattr(sys, 'frozen', False):
         # PyInstaller 打包后，资源在 sys._MEIPASS 临时目录中
-        base_path = sys._MEIPASS
+        base_path:str = getattr(sys, '_MEIPASS', os.path.dirname(__file__))
     else:
         # 正常运行时，使用脚本所在目录
         base_path = os.path.dirname(__file__)
