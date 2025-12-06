@@ -299,3 +299,82 @@ def external_champion_stats():
         return jsonify({'success': True, 'data': data})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@data_bp.route('/api/champions', methods=['GET'])
+def get_champions():
+    """
+    获取英雄ID到名称的映射
+    
+    Returns:
+        JSON: 英雄ID -> 名称的映射字典
+    """
+    import constants
+    champion_map = constants._get_champion_map()
+    return jsonify(champion_map)
+
+
+@data_bp.route('/api/summoner_stats/<path:game_name>/<path:tag_line>', methods=['GET'])
+def get_summoner_stats(game_name, tag_line):
+    """
+    获取召唤师的简要统计信息
+    
+    Args:
+        game_name: 游戏名
+        tag_line: Tag
+    
+    Returns:
+        JSON: 包含胜率等统计的响应
+    """
+    import urllib.parse
+    game_name = urllib.parse.unquote(game_name)
+    tag_line = urllib.parse.unquote(tag_line)
+    
+    if not app_state.is_lcu_connected():
+        return jsonify({'error': 'LCU not connected'}), 400
+    
+    token = app_state.lcu_credentials["auth_token"]
+    port = app_state.lcu_credentials["app_port"]
+    
+    # 获取召唤师信息
+    full_name = f"{game_name}#{tag_line}"
+    summoner_data = lcu.get_summoner_by_name(token, port, full_name)
+    
+    if not summoner_data:
+        return jsonify({'error': 'Summoner not found'}), 404
+    
+    puuid = summoner_data.get('puuid')
+    if not puuid:
+        return jsonify({'error': 'PUUID not found'}), 404
+    
+    # 获取最近20场战绩计算胜率
+    try:
+        history = lcu.get_match_history(token, port, puuid, count=20, begin_index=0)
+        if not history:
+            return jsonify({'wins': 0, 'losses': 0, 'winrate': 0})
+        
+        games = history.get('games', {}).get('games', [])
+        wins = 0
+        losses = 0
+        
+        for game in games:
+            participants = game.get('participants', [])
+            for p in participants:
+                if p.get('puuid') == puuid:
+                    stats = p.get('stats', {})
+                    if stats.get('win', False):
+                        wins += 1
+                    else:
+                        losses += 1
+                    break
+        
+        total = wins + losses
+        winrate = round((wins / total * 100), 1) if total > 0 else 0
+        
+        return jsonify({
+            'wins': wins,
+            'losses': losses,
+            'winrate': winrate
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

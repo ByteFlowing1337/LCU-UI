@@ -14,6 +14,9 @@ page_bp = Blueprint('pages', __name__)
 @page_bp.route('/')
 def index():
     """渲染主页面"""
+    # 检查是否使用 Vue 版本
+    use_vue = request.args.get('vue', '0') == '1'
+    
     lcu_connected = app_state.is_lcu_connected()
     recent_games = []
     current_summoner = None
@@ -69,10 +72,20 @@ def index():
         except Exception as e:
             print(f"Error fetching recent games: {e}")
     
-    return render_template('index.html', 
-                          lcu_connected=lcu_connected,
-                          current_summoner=current_summoner,
-                          recent_games=recent_games)
+    initial_vue_data = {
+        'lcuConnected': lcu_connected,
+        'summonerName': (current_summoner['displayName'] if current_summoner else 'Summoner'),
+        'recentGames': recent_games,
+    }
+
+    template = 'index_vue.html' if use_vue else 'index.html'
+    return render_template(
+        template,
+        lcu_connected=lcu_connected,
+        current_summoner=current_summoner,
+        recent_games=recent_games,
+        initial_vue_data=initial_vue_data,
+    )
 
 
 def _get_queue_name(queue_id):
