@@ -145,7 +145,6 @@ def auto_banpick_task(socketio, ban_champion_id=None, pick_champion_id=None):
                     
                     # 收集当前已被禁用/已被选中的英雄ID
                     banned_ids, picked_ids = _get_banned_and_picked_ids(session)
-                    unavailable_ids = banned_ids | picked_ids
 
                     # 构建 Ban/Pick 候选列表
                     ban_candidates, pick_candidates = _get_candidates(

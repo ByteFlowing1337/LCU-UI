@@ -1,0 +1,14 @@
+{
+  "name": "lcu-ui-tauri",
+  "version": "0.1.0",
+  "description": "Tauri shell for LCU UI Flask App",
+  "private": true,
+  "scripts": {
+    "tauri": "tauri"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@tauri-apps/cli": "^1.5.0"
+  },
+  "dependencies": {}
+}

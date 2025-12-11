@@ -2,6 +2,7 @@
 游戏流程相关 API
 处理游戏阶段、准备检查、选人等功能
 """
+from utils.logger import logger
 from .client import make_request
 
 
@@ -61,8 +62,6 @@ def get_champ_select_session(token, port):
     """
     return make_request("GET", "/lol-champ-select/v1/session", token, port)
 
-
-from utils.logger import logger
 
 def get_champ_select_enemies(token, port):
     """

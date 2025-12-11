@@ -14,3 +14,5 @@ env/
 .idea/
 tempcoderunnerfile.py
 scripts/
+node_modules/
+*/target

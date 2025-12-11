@@ -111,7 +111,9 @@ def main():
 
     # 在服务器可用后打开浏览器（更稳健，避免需要手动刷新）
     # 如果你希望强制使用回环或局域网地址，可在 config.py 中设置 PUBLIC_HOST
-    open_browser_when_ready(server_address, host=display_host, port=PORT, timeout=10)
+    # Check for --no-browser argument (used by Tauri sidecar)
+    if "--no-browser" not in sys.argv:
+        open_browser_when_ready(server_address, host=display_host, port=PORT, timeout=10)
 
     # 注册信号处理器：在接收到退出信号时，通知前端并退出
     def _shutdown_handler(signum, frame):
@@ -151,7 +153,7 @@ def main():
     logger.info(f"本机访问地址: http://127.0.0.1:{PORT}")
     logger.info(f"局域网访问地址: {server_address}")
     # 启动服务器
-    socketio.run(app, host=HOST, port=PORT)
+    socketio.run(app, host=HOST, port=PORT, allow_unsafe_werkzeug=True)
 
 
 if __name__ == '__main__':

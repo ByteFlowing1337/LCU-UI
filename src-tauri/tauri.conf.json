@@ -1,0 +1,46 @@
+{
+  "build": {
+    "beforeDevCommand": ".venv\\\\Scripts\\\\python.exe app.py --no-browser",
+    "beforeBuildCommand": "",
+    "devPath": "http://localhost:5000",
+    "distDir": "../dist",
+    "withGlobalTauri": true
+  },
+  "package": {
+    "productName": "lcu-ui",
+    "version": "0.1.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "shell": {
+        "all": false,
+        "open": true,
+        "sidecar": false,
+        "scope": []
+      },
+      "window": {
+        "all": true
+      }
+    },
+    "bundle": {
+      "active": true,
+      "targets": "all",
+      "identifier": "com.lcu-ui.app",
+      "icon": ["../static/icon.ico"],
+      "externalBin": []
+    },
+    "security": {
+      "csp": null
+    },
+    "windows": [
+      {
+        "fullscreen": false,
+        "resizable": true,
+        "title": "LCU UI",
+        "width": 1280,
+        "height": 720
+      }
+    ]
+  }
+}
