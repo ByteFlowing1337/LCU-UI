@@ -3,7 +3,7 @@
     "beforeDevCommand": ".venv\\\\Scripts\\\\python.exe app.py --no-browser",
     "beforeBuildCommand": "",
     "devPath": "http://localhost:5000",
-    "distDir": "../dist",
+    "distDir": "../ui_assets",
     "withGlobalTauri": true
   },
   "package": {
@@ -16,7 +16,7 @@
       "shell": {
         "all": false,
         "open": true,
-        "sidecar": false,
+        "sidecar": true,
         "scope": []
       },
       "window": {
@@ -28,7 +28,7 @@
       "targets": "all",
       "identifier": "com.lcu-ui.app",
       "icon": ["../static/icon.ico"],
-      "externalBin": []
+      "externalBin": ["binaries/desktop_main"]
     },
     "security": {
       "csp": null

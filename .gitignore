@@ -16,3 +16,4 @@ tempcoderunnerfile.py
 scripts/
 node_modules/
 */target
+*.exe

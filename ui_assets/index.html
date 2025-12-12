@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LCU UI - Starting...</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .loader-container {
+            text-align: center;
+            opacity: 0;
+            animation: fadeIn 0.5s ease-in forwards 0.2s;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-left-color: #00bcd4; /* Cyan/Teal accent */
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        h2 {
+            font-weight: 300;
+            margin-bottom: 10px;
+        }
+
+        p {
+            font-size: 0.9em;
+            color: #888;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="loader-container">
+        <div class="spinner"></div>
+        <h2>Starting Services</h2>
+        <p id="status-text">Connecting to local server...</p>
+    </div>
+
+    <script>
+        const TARGET_URL = 'http://127.0.0.1:5000/';
+        const RETRY_INTERVAL = 500; // 500ms
+        const MAX_RETRIES = 60; // 30 seconds max
+        let retries = 0;
+
+        function checkServer() {
+            fetch(TARGET_URL, { method: 'HEAD', mode: 'no-cors' })
+                .then(() => {
+                    // Success! Redirect.
+                    document.getElementById('status-text').innerText = 'Connected! Launching UI...';
+                    window.location.replace(TARGET_URL);
+                })
+                .catch(() => {
+                    retries++;
+                    if (retries < MAX_RETRIES) {
+                        setTimeout(checkServer, RETRY_INTERVAL);
+                    } else {
+                        document.getElementById('status-text').innerText = 'Server request timed out. Please restart the app.';
+                        document.querySelector('.spinner').style.borderColor = '#f44336'; // Red error
+                    }
+                });
+        }
+
+        // Start checking immediately
+        checkServer();
+    </script>
+</body>
+</html>
