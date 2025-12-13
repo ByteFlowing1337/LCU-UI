@@ -338,18 +338,6 @@ def match_detail_page(summoner_name, game_index):
     )
 
 
-@page_bp.route('/live_game')
-def live_game():
-    """
-    渲染实时游戏监控页面
-    
-    Returns:
-        HTML: 实时游戏详情页面
-    """
-    return render_template('live_game.html')
-
-
-
 @page_bp.route('/get_summoner_rank', methods=['GET'])
 def page_get_summoner_rank():
     """兼容性路由：在页面蓝图下也提供 /get_summoner_rank，以防数据蓝图不可达。

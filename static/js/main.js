@@ -280,14 +280,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  if (navStats) {
-    navStats.addEventListener("click", (e) => {
-      e.preventDefault();
-      setActiveNav(navStats);
-      window.location.href = "/live_game";
-    });
-  }
-
   if (navSettings) {
     navSettings.addEventListener("click", (e) => {
       e.preventDefault();
@@ -323,8 +315,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         highlightSection(automationHub);
       }
     }, 500);
-  } else if (window.location.pathname === "/live_game") {
-    setActiveNav(navStats);
   } else if (window.location.pathname === "/") {
     setActiveNav(navDashboard);
   }

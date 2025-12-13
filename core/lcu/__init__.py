@@ -57,13 +57,7 @@ from .match_history import (
     get_match_by_id
 )
 
-# 游戏内实时数据
-from .live_game import (
-    get_live_game_data,
-    get_enemy_players_from_game,
-    get_all_players_from_game,
-    get_enemy_stats
-)
+# 游戏内实时数据（live_game 模块已删除）
 
 # 数据增强
 from .enrichment import enrich_game_with_summoner_info, enrich_tft_game_with_summoner_info
@@ -98,11 +92,7 @@ __all__ = [
     'get_tft_match_history',
     'get_match_by_id',
     
-    # 游戏内实时数据
-    'get_live_game_data',
-    'get_enemy_players_from_game',
-    'get_all_players_from_game',
-    'get_enemy_stats',
+    # 游戏内实时数据（已删除）
     
     # 数据增强
     'enrich_game_with_summoner_info',

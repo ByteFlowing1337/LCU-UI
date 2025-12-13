@@ -1013,13 +1013,6 @@
                 });
               });
 
-              // Methods
-              const navigateTo = (key) => {
-                if (key === "stats") window.location.href = "/live_game";
-                else if (key === "search")
-                  document.querySelector(".ant-input")?.focus();
-              };
-
               const searchSummoner = () => {
                 if (!searchName.value.trim()) {
                   antd.message.warning("请输入召唤师名称");

@@ -3,11 +3,9 @@
 处理所有数据获取的 API 端点
 """
 from flask import Blueprint, request, jsonify
-import requests
 
 from config import app_state
 from core import lcu
-from utils.game_data_formatter import format_game_data
 from services.match_service import process_lol_match_history, process_single_tft_game, get_match_detail
 from services.opgg_service import fetch_champion_stats
 
@@ -235,45 +233,6 @@ def get_match():
     except Exception as e:
         print(f"Error getting match detail: {e}")
         return jsonify({"success": False, "message": "获取对局详情失败"}), 500
-
-
-@data_bp.route('/get_live_game_data', methods=['GET'])
-def get_live_game_data():
-    """
-    获取实时游戏数据（从游戏API 2999端口）
-    
-    Returns:
-        JSON: 格式化后的游戏数据（队友、敌人、游戏信息等）
-    """
-    try:
-        # 尝试连接游戏客户端API（端口2999，减少timeout）
-        response = requests.get('https://127.0.0.1:2999/liveclientdata/allgamedata', 
-                               verify=False, timeout=2)
-        
-        if response.status_code == 200:
-            all_game_data = response.json()
-            formatted_data = format_game_data(all_game_data)
-            
-            # OP.GG integration removed: returning formatted game data without external stats.
-            
-            return jsonify({
-                "success": True,
-                "inGame": True,
-                "data": formatted_data
-            })
-        else:
-            return jsonify({
-                "success": False,
-                "inGame": False,
-                "message": "无法连接到游戏客户端"
-            })
-            
-    except requests.exceptions.RequestException:
-        return jsonify({
-            "success": False,
-            "inGame": False,
-            "message": "未在游戏中或游戏API不可用"
-        })
 
 
 @data_bp.route('/external/champion_stats', methods=['GET'])
