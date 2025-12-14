@@ -49,10 +49,20 @@ jobs:
       - name: Build app (npm run build)
         run: npm run build
 
-      - name: Collect artifacts
+      - name: List bundle outputs
+        run: dir src-tauri\target\release\bundle /s
+
+      - name: Collect artifacts (NSIS/MSI)
+        shell: pwsh
         run: |
-          mkdir dist_upload
-          copy src-tauri\target\release\bundle\** dist_upload\
+          New-Item -ItemType Directory -Force -Path dist_upload | Out-Null
+          $nsis = Get-ChildItem -Path "src-tauri/target/release/bundle/nsis" -Filter *.exe -Recurse -ErrorAction SilentlyContinue
+          $msi  = Get-ChildItem -Path "src-tauri/target/release/bundle/msi" -Filter *.msi -Recurse -ErrorAction SilentlyContinue
+          if (-not $nsis -and -not $msi) {
+            Write-Error "No installer artifacts found under bundle/."
+          }
+          if ($nsis) { Copy-Item $nsis.FullName -Destination dist_upload -Force }
+          if ($msi)  { Copy-Item $msi.FullName  -Destination dist_upload -Force }
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
