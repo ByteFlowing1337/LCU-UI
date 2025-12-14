@@ -70,7 +70,7 @@ cd LCU-UI
 uv sync
 
 # Run the application
-uv run app.py
+uv run src/app.py
 ```
 
 ### Installation with pip
@@ -88,7 +88,7 @@ python -m venv .venv
 pip install -e .
 
 # Run the application
-python app.py
+python src/app.py
 ```
 
 ---
@@ -99,10 +99,10 @@ python app.py
 
 ```powershell
 # With uv
-uv run app.py
+uv run python src/app.py
 
 # Or with Python directly
-python app.py
+python src/app.py
 ```
 
 The server will automatically:
@@ -132,31 +132,26 @@ Connection status is displayed in the web interface.
 
 ---
 
-## 🛠️ Development
-
 ### Project Structure
 
 ```
 LCU-UI/
-├── app.py                 # Main Flask application
-├── config.py              # Configuration and app state
-├── constants.py           # Game constants and data loaders
 ├── pyproject.toml         # Project metadata and dependencies
-├── core/                  # Core LCU integration
-│   └── lcu/              # LCU API client modules
-├── routes/                # Flask route blueprints
-│   ├── api_routes.py     # API endpoints
-│   ├── page_routes.py    # Page rendering routes
-│   └── data_routes.py    # Data endpoints
-├── services/              # Business logic services
-│   ├── match_service.py  # Match processing
-│   ├── opgg_service.py   # External stats integration
-│   ├── auto_accept.py    # Auto-accept functionality
-│   └── auto_analyze.py   # Player analysis
-├── websocket/             # Socket.IO event handlers
-├── templates/             # Jinja2 HTML templates
-├── static/                # CSS, JS, images
-└── data/                  # JSON data files
+├── uv.lock                # uv lockfile for reproducible installs
+├── src/                   # Python package root
+│   ├── app.py             # Flask entrypoint
+│   ├── config.py          # Configuration and app state
+│   ├── constants.py       # Game constants and data loaders
+│   ├── core/              # LCU integration (HTTP client, game flow, summoner, etc.)
+│   ├── routes/            # Flask blueprints (pages, data, API)
+│   ├── services/          # Business logic (auto-accept, analyze, ban/pick, match services)
+│   ├── websocket/         # Socket.IO event handlers
+│   ├── utils/             # Helpers (logger, network, formatting)
+│   ├── templates/         # Jinja2 templates
+│   └── data/              # Runtime JSON assets
+├── static/                # Served static assets (CSS/JS/images built for the UI)
+├── ui_assets/             # Design/source frontend assets (pre-build)
+└── src-tauri/             # Tauri desktop wrapper
 ```
 
 ### Development Tools

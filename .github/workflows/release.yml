@@ -1,0 +1,42 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Set up Rust (for Tauri)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build app (npm run build)
+        run: npm run build
+
+      - name: Collect artifacts
+        run: |
+          mkdir dist_upload
+          copy src-tauri\target\release\bundle\** dist_upload\
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist_upload/**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -5,8 +5,8 @@
   "private": true,
   "scripts": {
     "tauri": "tauri",
-    "build:backend": "powershell -ExecutionPolicy Bypass -File build_backend.ps1",
-    "build": "npm run build:backend && tauri build"
+    "build:backend": "powershell -ExecutionPolicy Bypass -File src/build/build_backend.ps1",
+    "build": "npm run build:backend && npx tauri build"
   },
   "license": "MIT",
   "devDependencies": {
