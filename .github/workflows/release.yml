@@ -50,16 +50,25 @@ jobs:
         run: npm run build
 
       - name: List bundle outputs
-        run: dir src-tauri\target\release\bundle /s
+        shell: pwsh
+        run: |
+          $bundle = Join-Path (Get-Location) "src-tauri/target/release/bundle"
+          if (Test-Path $bundle) {
+            Write-Host "Listing bundle contents under $bundle"
+            Get-ChildItem -Path $bundle -Recurse | Select-Object FullName, Length, LastWriteTime
+          } else {
+            Write-Host "Bundle path not found: $bundle"
+          }
 
       - name: Collect artifacts (NSIS/MSI)
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist_upload | Out-Null
-          $nsis = Get-ChildItem -Path "src-tauri/target/release/bundle/nsis" -Filter *.exe -Recurse -ErrorAction SilentlyContinue
-          $msi  = Get-ChildItem -Path "src-tauri/target/release/bundle/msi" -Filter *.msi -Recurse -ErrorAction SilentlyContinue
+          $bundle = Join-Path (Get-Location) "src-tauri/target/release/bundle"
+          $nsis = Get-ChildItem -Path (Join-Path $bundle "nsis") -Filter *.exe -Recurse -ErrorAction SilentlyContinue
+          $msi  = Get-ChildItem -Path (Join-Path $bundle "msi")  -Filter *.msi -Recurse -ErrorAction SilentlyContinue
           if (-not $nsis -and -not $msi) {
-            Write-Error "No installer artifacts found under bundle/."
+            Write-Error "No installer artifacts found under $bundle."
           }
           if ($nsis) { Copy-Item $nsis.FullName -Destination dist_upload -Force }
           if ($msi)  { Copy-Item $msi.FullName  -Destination dist_upload -Force }
