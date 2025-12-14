@@ -1,0 +1,290 @@
+:root {
+  --bg-color: #0a0a0f;
+  --card-bg: rgba(255, 255, 255, 0.05);
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.6);
+  --accent-color: #1668dc;
+  --success-color: #52c41a;
+  --danger-color: #ff4d4f;
+  --warning-color: #faad14;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg-color);
+  background-image: radial-gradient(
+      at 0% 0%,
+      rgba(22, 104, 220, 0.15) 0px,
+      transparent 50%
+    ),
+    radial-gradient(at 100% 0%, rgba(82, 196, 26, 0.1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(255, 77, 79, 0.1) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(250, 173, 20, 0.1) 0px, transparent 50%);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  min-height: 100vh;
+}
+
+[v-cloak] {
+  display: none;
+}
+
+/* Ant Design Dark Theme Overrides */
+.ant-layout {
+  background: transparent !important;
+}
+.ant-layout-sider {
+  background: rgba(15, 15, 25, 0.8) !important;
+  backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+.ant-menu-dark {
+  background: transparent !important;
+}
+.ant-menu-dark .ant-menu-item {
+  margin: 8px;
+  border-radius: 12px;
+}
+.ant-menu-dark .ant-menu-item-selected {
+  background: rgba(22, 104, 220, 0.3) !important;
+}
+.ant-card {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 16px !important;
+  backdrop-filter: blur(10px);
+}
+.ant-card-head {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  color: var(--text-primary) !important;
+}
+.ant-card-head-title {
+  color: var(--text-primary) !important;
+}
+.ant-card-body {
+  color: var(--text-secondary);
+}
+.ant-input {
+  background: rgba(0, 0, 0, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+  border-radius: 10px !important;
+}
+.ant-input::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+.ant-input:focus,
+.ant-input:hover {
+  border-color: var(--accent-color) !important;
+}
+.ant-btn-primary {
+  background: linear-gradient(135deg, #1668dc 0%, #1554ad 100%) !important;
+  border: none !important;
+  box-shadow: 0 4px 15px rgba(22, 104, 220, 0.3) !important;
+}
+.ant-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(22, 104, 220, 0.4) !important;
+}
+.ant-btn-default {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+}
+.ant-tag {
+  border-radius: 6px !important;
+}
+.ant-switch-checked {
+  background: var(--success-color) !important;
+}
+.ant-select-selector {
+  background: rgba(0, 0, 0, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 10px !important;
+}
+.ant-select-selection-item,
+.ant-select-selection-placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+.ant-collapse-header {
+  color: var(--text-secondary) !important;
+}
+
+/* Custom Components */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+}
+.main-content {
+  flex: 1;
+  padding: 24px;
+  margin-left: 80px;
+}
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(82, 196, 26, 0.1);
+  border: 1px solid rgba(82, 196, 26, 0.2);
+  border-radius: 20px;
+  color: #52c41a;
+  font-weight: 500;
+}
+.status-indicator.disconnected {
+  background: rgba(255, 77, 79, 0.1);
+  border-color: rgba(255, 77, 79, 0.2);
+  color: #ff4d4f;
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 10px currentColor;
+}
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 24px;
+}
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.module-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.module-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateY(-2px);
+}
+.module-card.active {
+  border-color: rgba(82, 196, 26, 0.4);
+  box-shadow: 0 0 20px rgba(82, 196, 26, 0.1);
+}
+.module-card .icon {
+  font-size: 28px;
+  margin-bottom: 12px;
+  color: var(--accent-color);
+}
+.module-card.active .icon {
+  color: var(--success-color);
+}
+.module-card .title {
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--text-primary);
+}
+.module-card .status {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.analysis-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.analysis-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 20px;
+}
+.analysis-card .header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.analysis-card .header .icon {
+  font-size: 24px;
+}
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+.victory-badge {
+  background: rgba(82, 196, 26, 0.2);
+  color: #52c41a;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.defeat-badge {
+  background: rgba(255, 77, 79, 0.2);
+  color: #ff4d4f;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Dynamic Island */
+.dynamic-island {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 1000;
+}
+.dynamic-island .icon {
+  color: var(--accent-color);
+}
+.dynamic-island .text {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+@media (max-width: 1200px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  .module-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+    padding: 16px;
+  }
+  .module-grid,
+  .analysis-grid {
+    grid-template-columns: 1fr;
+  }
+}
