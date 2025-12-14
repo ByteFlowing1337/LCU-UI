@@ -25,7 +25,7 @@
     },
     "bundle": {
       "active": true,
-      "targets": "all",
+      "targets": ["nsis", "msi"],
       "identifier": "com.lcu-ui.app",
       "icon": ["../static/icon.ico"],
       "externalBin": ["binaries/desktop_main"]

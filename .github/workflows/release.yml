@@ -37,6 +37,12 @@ jobs:
       - name: Set up Rust (for Tauri)
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Install NSIS (for .exe installer)
+        run: choco install nsis -y
+
+      - name: Install WiX (for .msi installer)
+        run: choco install wixtoolset -y
+
       - name: Install frontend dependencies
         run: npm ci
 
