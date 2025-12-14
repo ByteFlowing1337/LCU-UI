@@ -40,6 +40,9 @@ from .game_flow import (
     get_champ_select_enemies
 )
 
+# 实时对局（live client data）
+from .live_client import get_all_players_from_game
+
 # 召唤师信息
 from .summoner import (
     get_current_summoner,
@@ -78,6 +81,9 @@ __all__ = [
     'accept_ready_check',
     'get_champ_select_session',
     'get_champ_select_enemies',
+
+    # 实时对局
+    'get_all_players_from_game',
     
     # 召唤师信息
     'get_current_summoner',
