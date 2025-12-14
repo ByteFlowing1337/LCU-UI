@@ -1,6 +1,6 @@
 """
 LOLHelper WebUI 主入口文件
-模块化版本
+
 """
 from flask import Flask
 from flask_socketio import SocketIO
@@ -26,7 +26,7 @@ def create_app():
         tuple: (app, socketio)
     """
     import sys
-    
+
     # 兼容 PyInstaller 打包环境
     if getattr(sys, 'frozen', False):
         # 打包后，资源在 sys._MEIPASS 目录
@@ -35,8 +35,11 @@ def create_app():
         static_folder = os.path.join(base_path, 'static')
         app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
     else:
-        # 正常开发环境
-        app = Flask(__name__)
+        # 正常开发环境：模板位于 src/templates，静态资源在仓库根的 static/
+        base_path = os.path.dirname(__file__)
+        template_folder = os.path.join(base_path, 'templates')
+        static_folder = os.path.abspath(os.path.join(base_path, '..', 'static'))
+        app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
     
     # 注册蓝图
     app.register_blueprint(page_bp)  # 页面渲染路由

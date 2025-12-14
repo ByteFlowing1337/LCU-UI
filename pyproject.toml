@@ -53,9 +53,13 @@ Issues = "https://github.com/ByteFlowing1337/LCU-UI/issues"
 [project.scripts]
 lolhelper-webui = "app:main"
 
+[tool.setuptools]
+package-dir = {"" = "src"}
+py-modules = ["app", "config", "constants"]
+
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["core*", "routes*", "services*", "utils*", "websocket*"]
+where = ["src"]
+include = ["*"]
 exclude = ["build", "dist", "runs", "*.egg-info", "__pycache__"]
 
 [tool.setuptools.package-data]

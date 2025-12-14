@@ -59,7 +59,7 @@ def register_socket_events(socketio):
         with thread_lock:
             # Require LCU connection before starting auto-accept
             if not app_state.is_lcu_connected():
-                emit('status_update', {'type': 'biz', 'message': '❌ 无法启动自动接受：未连接到LCU'})
+                emit('status_update', {'type': 'biz', 'message': '无法启动自动接受：未连接到LCU'})
                 print("❌ 尝试启动自动接受失败：LCU 未连接")
                 return
 
@@ -70,10 +70,10 @@ def register_socket_events(socketio):
 
             if thread and thread.is_alive():
                 if app_state.auto_accept_enabled:
-                    emit('status_update', {'type': 'biz', 'message': '⚠️ 自动接受功能已在运行中'})
+                    emit('status_update', {'type': 'biz', 'message': '自动接受功能已在运行中'})
                 else:
                     app_state.auto_accept_enabled = True
-                    emit('status_update', {'type': 'biz', 'message': '✅ 自动接受对局功能已重新开启'})
+                    emit('status_update', {'type': 'biz', 'message': '自动接受对局功能已重新开启'})
                     print("🎮 自动接受对局功能已重新激活现有线程")
             else:
                 app_state.auto_accept_enabled = True
@@ -83,7 +83,7 @@ def register_socket_events(socketio):
                     daemon=True
                 )
                 app_state.auto_accept_thread.start()
-                emit('status_update', {'type': 'biz', 'message': '✅ 自动接受对局功能已开启'})
+                emit('status_update', {'type': 'biz', 'message': '自动接受对局功能已开启'})
                 print("🎮 自动接受对局功能已启动")
 
     
@@ -93,7 +93,7 @@ def register_socket_events(socketio):
         with thread_lock:
             # Require LCU connection before starting auto-analyze
             if not app_state.is_lcu_connected():
-                emit('status_update', {'type': 'biz', 'message': '❌ 无法启动敌我分析：未连接到LCU'})
+                emit('status_update', {'type': 'biz', 'message': '无法启动敌我分析：未连接到LCU'})
                 print("❌ 尝试启动敌我分析失败：LCU 未连接")
                 return
 
@@ -104,11 +104,11 @@ def register_socket_events(socketio):
 
             if thread and thread.is_alive():
                 if app_state.auto_analyze_enabled:
-                    emit('status_update', {'type': 'biz', 'message': '⚠️ 敌我分析功能已在运行中'})
+                    emit('status_update', {'type': 'biz', 'message': ' 敌我分析功能已在运行中'})
                 else:
                     app_state.reset_analysis_state()
                     app_state.auto_analyze_enabled = True
-                    emit('status_update', {'type': 'biz', 'message': '✅ 敌我分析功能已重新开启'})
+                    emit('status_update', {'type': 'biz', 'message': ' 敌我分析功能已重新开启'})
                     print("🔍 敌我分析功能已重新激活现有线程")
             else:
                 # 重置分析状态，允许重新分析
@@ -120,7 +120,7 @@ def register_socket_events(socketio):
                     daemon=True
                 )
                 app_state.auto_analyze_thread.start()
-                emit('status_update', {'type': 'biz', 'message': '✅ 敌我分析功能已开启'})
+                emit('status_update', {'type': 'biz', 'message': ' 敌我分析功能已开启'})
                 print("🔍 敌我分析功能已启动")
     
     @socketio.on('stop_auto_accept')
@@ -128,7 +128,7 @@ def register_socket_events(socketio):
         """停止自动接受对局"""
         with thread_lock:
             app_state.auto_accept_enabled = False
-            emit('status_update', {'type': 'biz', 'message': '🛑 自动接受对局功能已停止'})
+            emit('status_update', {'type': 'biz', 'message': ' 自动接受对局功能已停止'})
             print("🛑 自动接受对局功能已停止")
     
     @socketio.on('stop_auto_analyze')
@@ -137,7 +137,7 @@ def register_socket_events(socketio):
         with thread_lock:
             app_state.auto_analyze_enabled = False
             app_state.reset_analysis_state()
-            emit('status_update', {'type': 'biz', 'message': '🛑 敌我分析功能已停止'})
+            emit('status_update', {'type': 'biz', 'message': ' 敌我分析功能已停止'})
             print("🛑 敌我分析功能已停止")
     
     @socketio.on('start_auto_banpick')
@@ -171,10 +171,10 @@ def register_socket_events(socketio):
             
             if thread and thread.is_alive():
                 if app_state.auto_banpick_enabled:
-                    emit('status_update', {'type': 'biz', 'message': '⚠️ 自动Ban/Pick功能已在运行中'})
+                    emit('status_update', {'type': 'biz', 'message': ' 自动Ban/Pick功能已在运行中'})
                 else:
                     app_state.auto_banpick_enabled = True
-                    emit('status_update', {'type': 'biz', 'message': '✅ 自动Ban/Pick功能已重新开启'})
+                    emit('status_update', {'type': 'biz', 'message': ' 自动Ban/Pick功能已重新开启'})
                     print("🎯 自动Ban/Pick功能已重新激活现有线程")
             else:
                 app_state.auto_banpick_enabled = True
@@ -186,7 +186,7 @@ def register_socket_events(socketio):
                 app_state.auto_banpick_thread.start()
                 ban_msg = f"Ban: {app_state.ban_champion_id}" if app_state.ban_champion_id else "未设置"
                 pick_msg = f"Pick: {app_state.pick_champion_id}" if app_state.pick_champion_id else "未设置"
-                emit('status_update', {'type': 'biz', 'message': f'✅ 自动Ban/Pick功能已开启 ({ban_msg}, {pick_msg})'})
+                emit('status_update', {'type': 'biz', 'message': f' 自动Ban/Pick功能已开启 ({ban_msg}, {pick_msg})'})
                 print(f"🎯 自动Ban/Pick功能已启动 - Ban: {app_state.ban_champion_id}, Pick: {app_state.pick_champion_id}")
     
     @socketio.on('stop_auto_banpick')
@@ -194,7 +194,7 @@ def register_socket_events(socketio):
         """停止自动Ban/Pick"""
         with thread_lock:
             app_state.auto_banpick_enabled = False
-            emit('status_update', {'type': 'biz', 'message': '🛑 自动Ban/Pick功能已停止'})
+            emit('status_update', {'type': 'biz', 'message': ' 自动Ban/Pick功能已停止'})
             print("🛑 自动Ban/Pick功能已停止")
     
     @socketio.on('configure_banpick')
@@ -216,7 +216,7 @@ def register_socket_events(socketio):
         
         ban_msg = f"Ban: {app_state.ban_champion_id}" if app_state.ban_champion_id else "未设置"
         pick_msg = f"Pick: {app_state.pick_champion_id}" if app_state.pick_champion_id else "未设置"
-        emit('status_update', {'type': 'biz', 'message': f'⚙️ 自动Ban/Pick配置已更新 ({ban_msg}, {pick_msg})'})
+        emit('status_update', {'type': 'biz', 'message': f'自动Ban/Pick配置已更新 ({ban_msg}, {pick_msg})'})
         print(f"⚙️ 自动Ban/Pick配置更新 - Ban: {app_state.ban_champion_id}, Pick: {app_state.pick_champion_id}")
  
     
@@ -238,8 +238,8 @@ def _detect_and_connect_lcu(socketio, status_proxy):
     if token and port:
         app_state.lcu_credentials["auth_token"] = token
         app_state.lcu_credentials["app_port"] = port
-        status_proxy.showMessage(f"✅ LCU 连接成功！端口: {port}。")
+        status_proxy.showMessage(f" LCU 连接成功！端口: {port}。")
     else:
         app_state.lcu_credentials["auth_token"] = None
         app_state.lcu_credentials["app_port"] = None
-        status_proxy.showMessage("❌ 连接 LCU 失败。请检查客户端是否运行或重启程序。")
+        status_proxy.showMessage(" 连接 LCU 失败。请检查客户端是否运行或重启程序。")
