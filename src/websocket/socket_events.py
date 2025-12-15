@@ -225,21 +225,28 @@ def register_socket_events(socketio):
 
 def _detect_and_connect_lcu(socketio, status_proxy):
     """
-    后台任务：尝试获取 LCU 凭证
+    后台任务：持续监控并尝试获取 LCU 凭证
     
     Args:
         socketio: SocketIO实例
         status_proxy: 消息代理对象
     """
-    status_proxy.showMessage("正在自动检测英雄联盟客户端 (进程和凭证)...")
+    import time
     
-    token, port = lcu.autodetect_credentials(status_proxy)
+    while True:
+        status_proxy.showMessage("正在自动检测英雄联盟客户端 (进程和凭证)...")
+        
+        token, port = lcu.autodetect_credentials(status_proxy)
 
-    if token and port:
-        app_state.lcu_credentials["auth_token"] = token
-        app_state.lcu_credentials["app_port"] = port
-        status_proxy.showMessage(f" LCU 连接成功！端口: {port}。")
-    else:
-        app_state.lcu_credentials["auth_token"] = None
-        app_state.lcu_credentials["app_port"] = None
-        status_proxy.showMessage(" 连接 LCU 失败。请检查客户端是否运行或重启程序。")
+        if token and port:
+            app_state.lcu_credentials["auth_token"] = token
+            app_state.lcu_credentials["app_port"] = port
+            status_proxy.showMessage(f"✅ LCU 连接成功！端口: {port}。")
+            # 连接成功后，每30秒检查一次连接状态
+            time.sleep(30)
+        else:
+            app_state.lcu_credentials["auth_token"] = None
+            app_state.lcu_credentials["app_port"] = None
+            status_proxy.showMessage("❌ 连接 LCU 失败。请检查客户端是否运行，10秒后重试...")
+            # 连接失败后，每10秒重试一次
+            time.sleep(10)
