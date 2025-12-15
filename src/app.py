@@ -155,8 +155,10 @@ def main():
     logger.info("Lcu UI 已启动！")
     logger.info(f"本机访问地址: http://127.0.0.1:{PORT}")
     logger.info(f"局域网访问地址: {server_address}")
-    # 启动服务器
-    socketio.run(app, host=HOST, port=PORT, allow_unsafe_werkzeug=True)
+    
+    # 启动服务器 (除非明确传入 --no-browser，否则启用调试和自动重载)
+    debug_mode = '--no-browser' not in sys.argv
+    socketio.run(app, host=HOST, port=PORT, debug=debug_mode, allow_unsafe_werkzeug=True)
 
 
 if __name__ == '__main__':

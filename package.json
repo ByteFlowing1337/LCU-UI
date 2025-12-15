@@ -4,6 +4,7 @@
   "description": "Tauri shell for LCU UI Flask App",
   "private": true,
   "scripts": {
+    "dev": "python src/app.py",
     "tauri": "tauri",
     "build:backend": "powershell -ExecutionPolicy Bypass -File src/build/build_backend.ps1",
     "build": "npm run build:backend && npx tauri build"
