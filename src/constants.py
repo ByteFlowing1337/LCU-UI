@@ -13,7 +13,7 @@ def find_league_client_root_static():
     common_paths = [
         r"C:\Riot Games\League of Legends", # Riot Games 默认路径
         r"D:\Riot Games\League of Legends",
-        r"C:\WeGameApps\英雄联盟\LeagueClient" # WeGame 默认路径
+        r"C:\WeGameApps\LOL\LeagueClient" # WeGame 默认路径
     ]
     
     for path in common_paths:
@@ -34,7 +34,6 @@ if CLIENT_ROOT_PATH:
     # LOG_DIR: LCU 日志文件的精确目录 (lcu_api.py 需要的结果)
     LOG_DIR = os.path.join(CLIENT_ROOT_PATH)
 else:
-    # 如果找不到根目录，将 LOG_DIR 设置为 None
     LOG_DIR = "C:\\WeGameApps\\英雄联盟\\LeagueClient"
 
 # ----------------------------------------------------

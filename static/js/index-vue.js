@@ -80,8 +80,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
           loadPreferences();
 
+          console.log("Initializing Socket.IO connection...");
           socket = io();
-          socket.on("connect", () => console.log("WebSocket connected"));
+          socket.on("connect", () => {
+            console.log("✅ WebSocket connected successfully");
+            realtimeStatus.value = "已连接到服务器";
+          });
+          socket.on("connect_error", (error) => {
+            console.error("❌ Socket.IO connection error:", error);
+            realtimeStatus.value = "连接失败";
+          });
+          socket.on("disconnect", (reason) => {
+            console.warn("🔌 Socket.IO disconnected:", reason);
+            realtimeStatus.value = "连接已断开";
+          });
           socket.on("status_update", (data) => {
             const msg = data.message || data.data || "";
             if (msg.includes("成功")) lcuConnected.value = true;
