@@ -46,8 +46,9 @@ def get_history():
     # 获取PUUID（若客户端未直接提供）
     token = app_state.lcu_credentials["auth_token"]
     port = app_state.lcu_credentials["app_port"]
+    client = lcu.get_client(token, port)
     if not puuid:
-        puuid = lcu.get_puuid(token, port, summoner_name)
+        puuid = client.get_puuid(summoner_name)
         if not puuid:
             return jsonify({
                 "success": False,
@@ -65,7 +66,7 @@ def get_history():
     begin_index = (page - 1) * count
     
     # 获取战绩
-    history = lcu.get_match_history(token, port, puuid, count=count, begin_index=begin_index)
+    history = client.get_match_history(puuid, count=count, begin_index=begin_index)
     if not history:
         return jsonify({
             "success": False,
@@ -112,8 +113,9 @@ def get_tft_history():
 
     token = app_state.lcu_credentials["auth_token"]
     port = app_state.lcu_credentials["app_port"]
+    client = lcu.get_client(token, port)
     if not puuid:
-        puuid = lcu.get_puuid(token, port, summoner_name)
+        puuid = client.get_puuid(summoner_name)
         if not puuid:
             return jsonify({
                 "success": False,
@@ -123,7 +125,7 @@ def get_tft_history():
     count = request.args.get('count', 20, type=int)
     count = min(max(count, 1), 200)
 
-    history = lcu.get_tft_match_history(token, port, puuid, count=count)
+    history = client.get_tft_match_history(puuid, count=count)
     if not history:
         return jsonify({
             "success": False,
@@ -175,9 +177,9 @@ def get_summoner_rank():
     # 获取基础召唤师信息
     summoner_data = None
     if puuid:
-        summoner_data = lcu.get_summoner_by_puuid(token, port, puuid)
+        summoner_data = client.get_summoner_by_puuid(puuid)
     else:
-        summoner_data = lcu.get_summoner_by_name(token, port, summoner_name)
+        summoner_data = client.get_summoner_by_name(summoner_name)
 
     if not summoner_data:
         return jsonify({"success": False, "message": "无法获取召唤师信息"}), 404
@@ -189,7 +191,7 @@ def get_summoner_rank():
 
     ranked = {}
     if summoner_id or puuid:
-        ranked = lcu.get_ranked_stats(token, port, summoner_id=summoner_id, puuid=puuid) or {}
+        ranked = client.get_ranked_stats(summoner_id=summoner_id, puuid=puuid) or {}
 
     return jsonify({
         "success": True,
@@ -297,7 +299,7 @@ def get_summoner_stats(game_name, tag_line):
     
     # 获取召唤师信息
     full_name = f"{game_name}#{tag_line}"
-    summoner_data = lcu.get_summoner_by_name(token, port, full_name)
+    summoner_data = client.get_summoner_by_name(full_name)
     
     if not summoner_data:
         return jsonify({'error': 'Summoner not found'}), 404
@@ -308,7 +310,7 @@ def get_summoner_stats(game_name, tag_line):
     
     # 获取最近20场战绩计算胜率
     try:
-        history = lcu.get_match_history(token, port, puuid, count=20, begin_index=0)
+        history = client.get_match_history(puuid, count=20, begin_index=0)
         if not history:
             return jsonify({'wins': 0, 'losses': 0, 'winrate': 0})
         

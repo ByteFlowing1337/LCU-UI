@@ -22,9 +22,10 @@ def index():
         try:
             token = app_state.lcu_credentials["auth_token"]
             port = app_state.lcu_credentials["app_port"]
+            client = lcu.get_client(token, port)
             
             # 获取当前登录的召唤师信息
-            current_summoner_data = lcu.get_current_summoner(token, port)
+            current_summoner_data = client.get_current_summoner()
             if current_summoner_data:
                 current_summoner = {
                     'displayName': current_summoner_data.get('gameName', '') + '#' + current_summoner_data.get('tagLine', ''),
@@ -35,7 +36,7 @@ def index():
                 
                 # 获取最近5场战绩
                 if current_summoner['puuid']:
-                    history = lcu.get_match_history(token, port, current_summoner['puuid'], count=5, begin_index=0)
+                    history = client.get_match_history(current_summoner['puuid'], count=5, begin_index=0)
                     if history:
                         games_data = history.get('games', {}).get('games', [])
                         for game in games_data[:5]:
@@ -214,12 +215,13 @@ def summoner_detail(summoner_name):
     if app_state.is_lcu_connected():
         token = app_state.lcu_credentials["auth_token"]
         port = app_state.lcu_credentials["app_port"]
+        client = lcu.get_client(token, port)
 
         summoner_data = None
         if puuid:
-            summoner_data = lcu.get_summoner_by_puuid(token, port, puuid)
+            summoner_data = client.get_summoner_by_puuid(puuid)
         else:
-            summoner_data = lcu.get_summoner_by_name(token, port, decoded_summoner_name)
+            summoner_data = client.get_summoner_by_name(decoded_summoner_name)
 
         if summoner_data:
             profile_icon_id = summoner_data.get('profileIconId', 29)
@@ -230,9 +232,7 @@ def summoner_detail(summoner_name):
             summoner_id = summoner_data.get('id') or summoner_data.get('summonerId')
             ranked_stats = {}
             if summoner_id or puuid:
-                ranked_stats = lcu.get_ranked_stats(
-                    token,
-                    port,
+                ranked_stats = client.get_ranked_stats(
                     summoner_id=summoner_id,
                     puuid=puuid
                 ) or {}
@@ -296,13 +296,14 @@ def tft_summoner_detail(summoner_name):
     if app_state.is_lcu_connected():
         token = app_state.lcu_credentials["auth_token"]
         port = app_state.lcu_credentials["app_port"]
+        client = lcu.get_client(token, port)
         if puuid:
-            summoner_data = lcu.get_summoner_by_puuid(token, port, puuid)
+            summoner_data = client.get_summoner_by_puuid(puuid)
             if summoner_data:
                 profile_icon_id = summoner_data.get('profileIconId', 29)
         else:
             # 如果没有 puuid，尝试通过名称获取（使用解码后的名称）
-            s_data = lcu.get_summoner_by_name(token, port, decoded_summoner_name)
+            s_data = client.get_summoner_by_name(decoded_summoner_name)
             if s_data:
                 profile_icon_id = s_data.get('profileIconId', 29)
                 # 同时获取 puuid 用于后续查询
@@ -352,12 +353,13 @@ def page_get_summoner_rank():
     puuid = request.args.get('puuid')
     token = app_state.lcu_credentials["auth_token"]
     port = app_state.lcu_credentials["app_port"]
+    client = lcu.get_client(token, port)
 
     summoner_data = None
     if puuid:
-        summoner_data = lcu.get_summoner_by_puuid(token, port, puuid)
+        summoner_data = client.get_summoner_by_puuid(puuid)
     else:
-        summoner_data = lcu.get_summoner_by_name(token, port, summoner_name)
+        summoner_data = client.get_summoner_by_name(summoner_name)
 
     if not summoner_data:
         return jsonify({"success": False, "message": "无法获取召唤师信息"}), 404
@@ -369,7 +371,7 @@ def page_get_summoner_rank():
 
     ranked = {}
     if summoner_id or puuid:
-        ranked = lcu.get_ranked_stats(token, port, summoner_id=summoner_id, puuid=puuid) or {}
+        ranked = client.get_ranked_stats(summoner_id=summoner_id, puuid=puuid) or {}
 
     return jsonify({
         "success": True,

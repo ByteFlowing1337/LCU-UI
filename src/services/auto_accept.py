@@ -27,8 +27,9 @@ def auto_accept_task(socketio):
             try:
                 token = app_state.lcu_credentials["auth_token"]
                 port = app_state.lcu_credentials["app_port"]
+                client = lcu.get_client(token, port)
 
-                phase = lcu.get_gameflow_phase(token, port)
+                phase = client.get_gameflow_phase()
 
                 # 状态重置逻辑：当阶段发生变化时
                 if phase != last_phase:
@@ -40,16 +41,14 @@ def auto_accept_task(socketio):
                 # ReadyCheck 阶段：自动接受对局
                 if phase == "ReadyCheck" and not accepted_this_phase:
                     try:
-                        lcu.accept_ready_check(token, port)
+                        client.accept_ready_check()
                         socketio.emit('status_update', {'type': 'biz', 'message': '✅ 已自动接受对局!'})
                         logger.info("✅ 自动接受对局成功")
                         accepted_this_phase = True
                     except Exception as accept_error:
-                        # 如果接受失败，可能还需要重试，所以不设置 accepted_this_phase = True
-                        # 但为了避免刷屏，可以控制错误日志的频率（这里暂不处理，假设失败是少数情况）
                         logger.warning(f"⚠️ 自动接受对局失败: {accept_error}")
                         socketio.emit('status_update', {'type': 'biz', 'message': f'⚠️ 自动接受失败: {accept_error}'})
-                        time.sleep(1) # 失败后稍作等待
+                        time.sleep(1)
 
             except Exception as e:
                 logger.error(f"❌ 自动接受任务异常: {e}")

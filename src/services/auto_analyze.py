@@ -8,7 +8,7 @@ from utils.logger import logger
 
 
 
-def _get_player_rank_info(token, port, puuid):
+def _get_player_rank_info(client, puuid):
     """
     获取玩家的段位信息
     
@@ -21,7 +21,7 @@ def _get_player_rank_info(token, port, puuid):
         dict: 包含段位信息的字典
     """
     try:
-        ranked_stats = lcu.get_ranked_stats(token, port, puuid=puuid)
+        ranked_stats = client.get_ranked_stats(puuid=puuid)
         if not ranked_stats or not isinstance(ranked_stats, dict):
             return {'tier': 'UNRANKED', 'division': '', 'lp': 0}
         
@@ -80,8 +80,9 @@ def auto_analyze_task(socketio):
             try:
                 token = app_state.lcu_credentials["auth_token"]
                 port = app_state.lcu_credentials["app_port"]
+                client = lcu.get_client(token, port)
 
-                phase = lcu.get_gameflow_phase(token, port)
+                phase = client.get_gameflow_phase()
 
                 # 检测到新的游戏流程开始，重置状态
                 if last_phase in ["Lobby", "None", None] and phase not in ["Lobby", "None"]:
@@ -91,13 +92,13 @@ def auto_analyze_task(socketio):
 
                 # ChampSelect 阶段：分析队友战绩
                 elif phase == "ChampSelect" and not app_state.teammate_analysis_done:
-                    _analyze_teammates(token, port, socketio)
+                    _analyze_teammates(client, socketio)
 
                 # InProgress/GameStart 阶段：分析敌人战绩
                 elif phase in ["InProgress", "GameStart"] and not app_state.enemy_analysis_done:
                     if enemy_retry_count < MAX_ENEMY_RETRIES:
                         enemy_retry_count += 1
-                        success = _analyze_enemies(token, port, socketio, enemy_retry_count, MAX_ENEMY_RETRIES)
+                        success = _analyze_enemies(client, socketio, enemy_retry_count, MAX_ENEMY_RETRIES)
                         if not success:
                             time.sleep(3)  # 失败后等待3秒重试
                     else:
@@ -138,7 +139,7 @@ def auto_analyze_task(socketio):
         logger.info("🛑 敌我分析任务已退出")
 
 
-def _analyze_teammates(token, port, socketio):
+def _analyze_teammates(client, socketio):
     """
     分析队友战绩（ChampSelect阶段）
     
@@ -147,7 +148,7 @@ def _analyze_teammates(token, port, socketio):
         port: LCU端口
         socketio: SocketIO实例
     """
-    session = lcu.get_champ_select_session(token, port)
+    session = client.get_champ_select_session()
     if session:
         teammates = []
         for team_member in session.get('myTeam', []):
@@ -156,7 +157,7 @@ def _analyze_teammates(token, port, socketio):
                 app_state.current_teammates.add(puuid)  # 记录队友PUUID
                 
                 # 获取段位信息
-                rank_info = _get_player_rank_info(token, port, puuid)
+                rank_info = _get_player_rank_info(client, puuid)
                 
                 teammates.append({
                     'gameName': team_member.get('gameName', '未知'),
@@ -173,7 +174,7 @@ def _analyze_teammates(token, port, socketio):
             logger.info(f"📝 记录队友PUUID集合: {len(app_state.current_teammates)} 人")
 
 
-def _ensure_teammates_from_live_game(token, port, socketio, players_data):
+def _ensure_teammates_from_live_game(client, socketio, players_data):
     """在游戏已开始但未进行队友分析时，从实时对局数据填充队友信息。"""
     if app_state.teammate_analysis_done:
         return
@@ -189,7 +190,7 @@ def _ensure_teammates_from_live_game(token, port, socketio, players_data):
             continue
 
         app_state.current_teammates.add(puuid)
-        rank_info = _get_player_rank_info(token, port, puuid)
+        rank_info = _get_player_rank_info(client, puuid)
         teammates.append({
             'gameName': entry.get('gameName') or entry.get('summonerName', '未知'),
             'tagLine': entry.get('tagLine', ''),
@@ -205,7 +206,7 @@ def _ensure_teammates_from_live_game(token, port, socketio, players_data):
         logger.info(f"📝 记录队友PUUID集合: {len(app_state.current_teammates)} 人")
 
 
-def _analyze_enemies(token, port, socketio, retry_count, max_retries):
+def _analyze_enemies(client, socketio, retry_count, max_retries):
     """
     分析敌人战绩（InProgress阶段）
     
@@ -223,11 +224,11 @@ def _analyze_enemies(token, port, socketio, retry_count, max_retries):
     logger.info(f"开始第 {retry_count} 次尝试获取敌方信息")
     
     # 调用API获取所有玩家（通过team字段区分敌我：ORDER vs CHAOS）
-    players_data = lcu.get_all_players_from_game(token, port)
+    players_data = client.get_all_players_from_game()
     
     if players_data:
         # 如果之前未能在 ChampSelect 阶段获取队友，此处补发
-        _ensure_teammates_from_live_game(token, port, socketio, players_data)
+        _ensure_teammates_from_live_game(client, socketio, players_data)
 
         enemies = players_data.get('enemies', [])
         
@@ -245,7 +246,7 @@ def _analyze_enemies(token, port, socketio, retry_count, max_retries):
         for enemy in enemies:
             puuid = enemy.get('puuid')
             if puuid:
-                rank_info = _get_player_rank_info(token, port, puuid)
+                rank_info = _get_player_rank_info(client, puuid)
                 enemy['rank'] = rank_info
         
         if len(enemies) > 0:
