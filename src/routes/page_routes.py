@@ -7,6 +7,7 @@ from config import app_state
 import constants
 from core import lcu
 import urllib.parse
+import re
 
 page_bp = Blueprint('pages', __name__)
 
@@ -124,6 +125,16 @@ def _format_time_ago(timestamp_ms):
         return 'Just now'
 
 
+def _sanitize_summoner_input(raw: str):
+    """移除不可见的双向控制符并去除首尾空白。"""
+    if not isinstance(raw, str):
+        return raw
+    # 常见双向控制字符集合：LRI/RLI/FSI/PDI + LRE/RLE/PDF 等
+    bidi_ctrl_pattern = r"[\u202A\u202B\u202D\u202E\u202C\u2066\u2067\u2068\u2069]"
+    cleaned = re.sub(bidi_ctrl_pattern, "", raw)
+    return cleaned.strip()
+
+
 @page_bp.route('/summoner/<path:summoner_name>')
 def summoner_detail(summoner_name):
     """
@@ -135,8 +146,9 @@ def summoner_detail(summoner_name):
     Returns:
         HTML: 详细战绩页面
     """
-    # URL 解码召唤师名称
+    # URL 解码并清理召唤师名称（移除双向控制符等不可见字符）
     decoded_summoner_name = urllib.parse.unquote(summoner_name)
+    decoded_summoner_name = _sanitize_summoner_input(decoded_summoner_name)
     
     # allow optional puuid query param to bypass name->puuid lookup in the client
     puuid = request.args.get('puuid')

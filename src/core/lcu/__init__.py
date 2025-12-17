@@ -22,11 +22,10 @@ League of Legends Client Update API 客户端封装
 
 # 凭证检测
 from .credentials import (
+    extract_params_from_process,
     autodetect_credentials,
     is_league_client_running,
-    get_latest_log_file,
-    extract_params_from_log,
-    detect_file_encoding
+
 )
 
 from .client import LCUClient
@@ -118,10 +117,8 @@ __all__ = [
     'get_client',
     # 凭证检测
     'autodetect_credentials',
+    'extract_params_from_process',
     'is_league_client_running',
-    'get_latest_log_file',
-    'extract_params_from_log',
-    'detect_file_encoding',
     # 共享服务
     'enrich_game_with_augments',
 ]

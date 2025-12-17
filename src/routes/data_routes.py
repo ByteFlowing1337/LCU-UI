@@ -171,11 +171,8 @@ def get_summoner_rank():
     if not app_state.is_lcu_connected():
         return jsonify({"success": False, "message": "未连接到客户端"}), 400
 
-    token = app_state.lcu_credentials["auth_token"]
-    port = app_state.lcu_credentials["app_port"]
-
     # 获取基础召唤师信息
-    summoner_data = None
+    client = lcu.get_client(app_state.lcu_credentials["auth_token"], app_state.lcu_credentials["app_port"])
     if puuid:
         summoner_data = client.get_summoner_by_puuid(puuid)
     else:
@@ -293,10 +290,9 @@ def get_summoner_stats(game_name, tag_line):
     
     if not app_state.is_lcu_connected():
         return jsonify({'error': 'LCU not connected'}), 400
-    
-    token = app_state.lcu_credentials["auth_token"]
-    port = app_state.lcu_credentials["app_port"]
-    
+
+    client = lcu.get_client(app_state.lcu_credentials["auth_token"], app_state.lcu_credentials["app_port"])
+
     # 获取召唤师信息
     full_name = f"{game_name}#{tag_line}"
     summoner_data = client.get_summoner_by_name(full_name)

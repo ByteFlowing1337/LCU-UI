@@ -8,6 +8,11 @@ from services import auto_accept_task, auto_analyze_task, auto_banpick_task
 from core import lcu
 
 
+# 全局检测线程，避免每次浏览器连接都重复创建
+_detect_thread = None
+_detect_thread_lock = threading.Lock()
+
+
 class SocketIOMessageProxy:
     """用 Socket.IO 消息模拟 status_bar 的 showMessage 方法"""
     
@@ -36,8 +41,13 @@ def register_socket_events(socketio):
         print('浏览器客户端已连接，触发自动检测...')
         status_proxy = SocketIOMessageProxy(socketio)
         status_proxy.showMessage('已连接到本地服务器，开始自动检测LCU...')
-        
-        socketio.start_background_task(_detect_and_connect_lcu, socketio, status_proxy)
+
+        global _detect_thread
+        with _detect_thread_lock:
+            if _detect_thread is None or not _detect_thread.is_alive():
+                _detect_thread = socketio.start_background_task(_detect_and_connect_lcu, socketio, status_proxy)
+            else:
+                status_proxy.showMessage('检测线程已在运行，跳过重复启动。')
     
     @socketio.on('disconnect')
     def handle_disconnect():
