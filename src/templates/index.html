@@ -27,12 +27,6 @@
   <body>
     {% raw %}
     <div id="app" v-cloak>
-      <!-- Dynamic Island -->
-      <div class="dynamic-island">
-        <i class="bi bi-activity icon"></i>
-        <span class="text">{{ realtimeStatus }}</span>
-      </div>
-
       <a-config-provider :theme="darkTheme">
         <a-layout class="app-container">
           <!-- Sidebar -->
@@ -130,6 +124,88 @@
                     <i class="bi bi-grid-3x3-gap" style="margin-right: 8px"></i>
                     TFT Stats
                   </a-button>
+                </a-card>
+
+                <!-- Summoner Overview -->
+                <a-card
+                  v-if="summonerProfile || profileLoading"
+                  style="margin-bottom: 20px"
+                >
+                  <template #title>
+                    <i
+                      class="bi bi-person"
+                      style="margin-right: 8px; color: #1668dc"
+                    ></i>
+                    Summoner Overview
+                  </template>
+                  <a-spin :spinning="profileLoading">
+                    <template v-if="summonerProfile">
+                      <div class="summoner-overview">
+                        <a-avatar :size="64" :src="summonerProfile.iconUrl">
+                          <template #icon
+                            ><i class="bi bi-person"></i
+                          ></template>
+                        </a-avatar>
+                        <div class="info">
+                          <div class="name">
+                            {{ summonerProfile.displayName }}
+                          </div>
+                          <div class="meta">
+                            Lv. {{ summonerProfile.level }}
+                          </div>
+                          <div
+                            class="ranks"
+                            v-if="summonerProfile.ranks && summonerProfile.ranks.length"
+                          >
+                            <span
+                              v-for="queue in summonerProfile.ranks"
+                              :key="queue.queueType"
+                              class="rank-pill"
+                            >
+                              {{ queue.label }} · {{ queue.tier || 'Unranked' }}
+                              {{ queue.division || '' }}
+                              <span v-if="queue.lp !== undefined">
+                                · {{ queue.lp }} LP</span
+                              >
+                              <span
+                                v-if="queue.wins !== null && queue.losses !== null"
+                              >
+                                · {{ queue.wins }}W {{ queue.losses }}L</span
+                              >
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div
+                        class="match-list"
+                        v-if="summonerHistory && summonerHistory.length"
+                      >
+                        <div
+                          class="match-row"
+                          v-for="(game, idx) in summonerHistory"
+                          :key="idx"
+                        >
+                          <span
+                            :class="['result-pill', game.result === 'Win' ? 'win' : 'loss']"
+                            >{{ game.result || 'N/A' }}</span
+                          >
+                          <span class="queue">{{ game.queue }}</span>
+                          <span class="kda"
+                            >KDA {{ game.kills }}/{{ game.deaths }}/{{
+                            game.assists }}</span
+                          >
+                          <span class="time"
+                            >{{ game.gameCreation | timeAgo }}</span
+                          >
+                        </div>
+                      </div>
+                      <a-empty v-else description="No recent games" />
+                    </template>
+                    <template v-else-if="profileError">
+                      <a-alert type="error" :message="profileError" show-icon />
+                    </template>
+                  </a-spin>
                 </a-card>
 
                 <!-- Recent Activity -->
@@ -359,9 +435,14 @@
                         :key="tm.puuid"
                         class="activity-item"
                       >
-                        <a-avatar style="background-color: #1668dc"
-                          >{{ tm.gameName.charAt(0) }}</a-avatar
+                        <a-avatar
+                          :src="getChampionIcon(tm.championId)"
+                          style="background-color: #1668dc"
                         >
+                          <template #icon
+                            ><i class="bi bi-person"></i
+                          ></template>
+                        </a-avatar>
                         <div style="flex: 1">
                           <a
                             :href="'/summoner/' + encodeURIComponent(tm.gameName + '#' + tm.tagLine)"
@@ -370,13 +451,18 @@
                           >
                             {{ tm.gameName }}#{{ tm.tagLine }}
                           </a>
-                          <div
-                            style="
-                              font-size: 12px;
-                              color: var(--text-secondary);
-                            "
-                          >
-                            {{ tm.stats || 'Loading...' }}
+                          <div class="stat-line">
+                            <span>{{ tm.stats?.summary || 'Loading...' }}</span>
+                            <span v-if="tm.stats?.kda" class="kda-pill"
+                              >KDA {{ tm.stats.kda }}</span
+                            >
+                            <span
+                              v-if="tm.stats?.streakType"
+                              :class="['streak-pill', tm.stats.streakType === 'W' ? 'streak-win' : 'streak-loss']"
+                            >
+                              {{ tm.stats.streakType === 'W' ? '连胜' : '连败'
+                              }} x{{ tm.stats.streakCount }}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -409,9 +495,14 @@
                         :key="enemy.puuid"
                         class="activity-item"
                       >
-                        <a-avatar style="background-color: #ff4d4f"
-                          >{{ enemy.gameName.charAt(0) }}</a-avatar
+                        <a-avatar
+                          :src="getChampionIcon(enemy.championId)"
+                          style="background-color: #ff4d4f"
                         >
+                          <template #icon
+                            ><i class="bi bi-person"></i
+                          ></template>
+                        </a-avatar>
                         <div style="flex: 1">
                           <a
                             :href="'/summoner/' + encodeURIComponent(enemy.gameName + '#' + enemy.tagLine)"
@@ -420,13 +511,20 @@
                           >
                             {{ enemy.gameName }}#{{ enemy.tagLine }}
                           </a>
-                          <div
-                            style="
-                              font-size: 12px;
-                              color: var(--text-secondary);
-                            "
-                          >
-                            {{ enemy.stats || 'Loading...' }}
+                          <div class="stat-line">
+                            <span
+                              >{{ enemy.stats?.summary || 'Loading...' }}</span
+                            >
+                            <span v-if="enemy.stats?.kda" class="kda-pill"
+                              >KDA {{ enemy.stats.kda }}</span
+                            >
+                            <span
+                              v-if="enemy.stats?.streakType"
+                              :class="['streak-pill', enemy.stats.streakType === 'W' ? 'streak-win' : 'streak-loss']"
+                            >
+                              {{ enemy.stats.streakType === 'W' ? '连胜' :
+                              '连败' }} x{{ enemy.stats.streakCount }}
+                            </span>
                           </div>
                         </div>
                       </div>

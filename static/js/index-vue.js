@@ -38,6 +38,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const recentGames = ref(INITIAL_DATA.recentGames);
         const searchName = ref("");
         const realtimeStatus = ref("等待指令...");
+        const summonerProfile = ref(null);
+        const summonerHistory = ref([]);
+        const profileLoading = ref(false);
+        const profileError = ref("");
 
         const autoAcceptRunning = ref(false);
         const autoAnalyzeRunning = ref(false);
@@ -46,6 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const banChampions = ref([null]);
         const pickChampions = ref([null]);
         const championOptions = ref([]);
+        const championById = ref({});
 
         const teammates = ref([]);
         const enemies = ref([]);
@@ -74,6 +79,9 @@ document.addEventListener("DOMContentLoaded", () => {
               value: parseInt(id),
               label: name,
             }));
+            championById.value = Object.fromEntries(
+              Object.entries(data).map(([id, name]) => [parseInt(id), name])
+            );
           } catch (e) {
             console.error("Failed to load champions:", e);
           }
@@ -104,40 +112,98 @@ document.addEventListener("DOMContentLoaded", () => {
           socket.on("enemies_found", (data) => {
             enemies.value = data.enemies.map((e) => ({
               ...e,
-              stats: "Loading...",
+              stats: null,
             }));
             realtimeStatus.value = `发现 ${data.enemies.length} 名敌人!`;
             data.enemies.forEach(async (enemy, idx) => {
               enemies.value[idx].stats = await fetchStats(
                 enemy.gameName,
-                enemy.tagLine
+                enemy.tagLine,
+                enemy.puuid
               );
             });
           });
           socket.on("teammates_found", (data) => {
             teammates.value = data.teammates.map((tm) => ({
               ...tm,
-              stats: "Loading...",
+              stats: null,
             }));
             realtimeStatus.value = `发现 ${data.teammates.length} 名队友!`;
             data.teammates.forEach(async (tm, idx) => {
               teammates.value[idx].stats = await fetchStats(
                 tm.gameName,
-                tm.tagLine
+                tm.tagLine,
+                tm.puuid
               );
             });
           });
         });
 
-        const searchSummoner = () => {
+        const searchSummoner = async () => {
           if (!searchName.value.trim()) {
             antd.message.warning("请输入召唤师名称");
             return;
           }
-          window.open(
-            `/summoner/${encodeURIComponent(searchName.value)}`,
-            "_blank"
-          );
+          profileError.value = "";
+          profileLoading.value = true;
+          summonerProfile.value = null;
+          summonerHistory.value = [];
+          const encoded = encodeURIComponent(searchName.value.trim());
+          try {
+            const rankRes = await fetch(
+              `/api/get_summoner_rank?name=${encoded}`
+            );
+            const rankJson = await rankRes.json();
+            if (!rankRes.ok || !rankJson.success) {
+              throw new Error(rankJson.message || "召唤师信息获取失败");
+            }
+
+            const historyRes = await fetch(
+              `/api/get_history?name=${encoded}&count=5&page=1`
+            );
+            const historyJson = await historyRes.json();
+            if (!historyRes.ok || !historyJson.success) {
+              throw new Error(historyJson.message || "战绩获取失败");
+            }
+
+            const ranks = Array.isArray(rankJson.ranked?.queues)
+              ? rankJson.ranked.queues.map((q) => ({
+                  label: q.queueType || q.queue || q.type || "",
+                  tier: q.tier,
+                  division: q.division,
+                  lp: q.lp ?? q.leaguePoints ?? null,
+                  wins: q.wins ?? null,
+                  losses: q.losses ?? null,
+                  queueType: q.queueType || q.queue || q.type || "",
+                }))
+              : [];
+
+            summonerProfile.value = {
+              displayName: searchName.value.trim(),
+              level: rankJson.summoner_level,
+              iconUrl: `https://ddragon.leagueoflegends.com/cdn/14.23.1/img/profileicon/${rankJson.profile_icon_id}.png`,
+              ranks,
+            };
+
+            summonerHistory.value = Array.isArray(historyJson.games)
+              ? historyJson.games.map((g) => ({
+                  result: g.result || g.win_status || (g.win ? "Win" : "Loss"),
+                  queue: g.queue || g.queue_name || "",
+                  kills: g.kills ?? 0,
+                  deaths: g.deaths ?? 0,
+                  assists: g.assists ?? 0,
+                  gameCreation: g.gameCreation || g.game_creation || Date.now(),
+                }))
+              : [];
+
+            antd.message.success("查询完成");
+          } catch (err) {
+            console.error(err);
+            profileError.value = err.message || "查询失败";
+            antd.message.error(profileError.value);
+          } finally {
+            profileLoading.value = false;
+          }
         };
 
         const searchTFT = () => {
@@ -211,19 +277,139 @@ document.addEventListener("DOMContentLoaded", () => {
         const filterChampion = (input, option) =>
           option.label.toLowerCase().includes(input.toLowerCase());
 
-        const fetchStats = async (gameName, tagLine) => {
+        const fetchStats = async (gameName, tagLine, puuid) => {
           try {
-            const res = await fetch(
-              `/api/summoner_stats/${encodeURIComponent(
-                gameName
-              )}/${encodeURIComponent(tagLine)}`
-            );
-            const data = await res.json();
-            if (data.error) return "Stats unavailable";
-            return `${data.wins}W ${data.losses}L (${data.winrate}% WR)`;
-          } catch {
-            return "Stats unavailable";
+            const encodedName = encodeURIComponent(gameName);
+            const encodedTag = encodeURIComponent(tagLine);
+            const queryPuuid = puuid
+              ? `puuid=${encodeURIComponent(puuid)}`
+              : "";
+
+            // 并行获取：段位信息 + 最近20场战绩
+            const [rankRes, histRes] = await Promise.all([
+              fetch(
+                `/api/summoner_stats/${encodedName}/${encodedTag}${
+                  queryPuuid ? `?${queryPuuid}` : ""
+                }`
+              ),
+              fetch(
+                `/get_history?name=${encodeURIComponent(
+                  `${gameName}#${tagLine}`
+                )}&count=20&page=1`
+              ),
+            ]);
+
+            const rankJson = await rankRes.json();
+            const histJson = await histRes.json();
+
+            const rankQueues = Array.isArray(rankJson?.queues)
+              ? rankJson.queues
+              : [];
+            const primaryRank =
+              rankQueues.find((q) =>
+                String(q.queueType || q.queue || q.type || "")
+                  .toUpperCase()
+                  .includes("SOLO")
+              ) || rankQueues[0];
+            const rankLabel = primaryRank
+              ? `${primaryRank.tier || "Unranked"} ${
+                  primaryRank.division || ""
+                }`.trim()
+              : "Unranked";
+            const lpPart =
+              primaryRank &&
+              (primaryRank.lp ?? primaryRank.leaguePoints) !== undefined
+                ? ` ${primaryRank.lp ?? primaryRank.leaguePoints}LP`
+                : "";
+
+            let wins = 0;
+            let losses = 0;
+            let totalKills = 0;
+            let totalDeaths = 0;
+            let totalAssists = 0;
+            let streakResult = null;
+            let streakCount = 0;
+            const games = Array.isArray(histJson?.games)
+              ? [...histJson.games]
+              : [];
+            if (games.length) {
+              games.sort((a, b) => {
+                const aTime =
+                  a.gameCreation || a.game_creation || a.timestamp || 0;
+                const bTime =
+                  b.gameCreation || b.game_creation || b.timestamp || 0;
+                return bTime - aTime; // newest first
+              });
+
+              games.forEach((g) => {
+                const winFlag =
+                  g.win === true ||
+                  g.result === "Win" ||
+                  g.win_status === "Win" ||
+                  g.stats?.win === true;
+                if (winFlag) wins += 1;
+                else losses += 1;
+
+                const k = g.kills ?? g.stats?.kills ?? 0;
+                const d = g.deaths ?? g.stats?.deaths ?? 0;
+                const a = g.assists ?? g.stats?.assists ?? 0;
+                totalKills += k;
+                totalDeaths += d;
+                totalAssists += a;
+              });
+
+              for (const g of games) {
+                const winFlag =
+                  g.win === true ||
+                  g.result === "Win" ||
+                  g.win_status === "Win" ||
+                  g.stats?.win === true;
+                const current = winFlag ? "W" : "L";
+                if (streakResult === null) {
+                  streakResult = current;
+                  streakCount = 1;
+                } else if (streakResult === current) {
+                  streakCount += 1;
+                } else {
+                  break;
+                }
+              }
+            }
+            const total = wins + losses;
+            const winrate = total > 0 ? ((wins / total) * 100).toFixed(1) : "0";
+
+            const kda =
+              totalDeaths > 0
+                ? ((totalKills + totalAssists) / totalDeaths).toFixed(2)
+                : totalKills + totalAssists > 0
+                ? "Perfect"
+                : "0";
+
+            return {
+              summary: `${wins}W ${losses}L (${winrate}% WR) · ${rankLabel}${lpPart}`,
+              kda,
+              streakType: streakCount >= 3 ? streakResult : null,
+              streakCount: streakCount >= 3 ? streakCount : null,
+            };
+          } catch (err) {
+            console.error(err);
+            return {
+              summary: "Stats unavailable",
+              kda: null,
+              streakType: null,
+              streakCount: null,
+            };
           }
+        };
+
+        const getChampionIcon = (championId) => {
+          if (!championId) return null;
+          const name = championById.value[championId];
+          if (!name) return null;
+          return `https://ddragon.leagueoflegends.com/cdn/15.23.1/img/champion/${name.replace(
+            " ",
+            ""
+          )}.png`;
         };
 
         const savePreferences = () => {
@@ -252,6 +438,20 @@ document.addEventListener("DOMContentLoaded", () => {
           } catch {}
         };
 
+        const timeAgo = (value) => {
+          if (!value) return "";
+          const now = Date.now();
+          const diffMs = now - value;
+          const diffSec = Math.floor(diffMs / 1000);
+          const diffMin = Math.floor(diffSec / 60);
+          const diffHour = Math.floor(diffMin / 60);
+          const diffDay = Math.floor(diffHour / 24);
+          if (diffDay > 0) return `${diffDay}d ago`;
+          if (diffHour > 0) return `${diffHour}h ago`;
+          if (diffMin > 0) return `${diffMin}m ago`;
+          return `${diffSec}s ago`;
+        };
+
         const navigateTo = (key) => {
           if (key === "stats") antd.message.info("实时游戏模块已移除");
           else if (key === "search")
@@ -266,15 +466,21 @@ document.addEventListener("DOMContentLoaded", () => {
           recentGames,
           searchName,
           realtimeStatus,
+          summonerProfile,
+          summonerHistory,
+          profileLoading,
+          profileError,
           autoAcceptRunning,
           autoAnalyzeRunning,
           autoBanPickRunning,
           banChampions,
           pickChampions,
           championOptions,
+          championById,
           teammates,
           enemies,
           activeModulesCount,
+          getChampionIcon,
           navigateTo,
           searchSummoner,
           searchTFT,
@@ -284,6 +490,7 @@ document.addEventListener("DOMContentLoaded", () => {
           addBanSlot,
           addPickSlot,
           filterChampion,
+          timeAgo,
         };
       },
     });

@@ -287,22 +287,30 @@ def get_summoner_stats(game_name, tag_line):
     import urllib.parse
     game_name = urllib.parse.unquote(game_name)
     tag_line = urllib.parse.unquote(tag_line)
+    puuid_override = request.args.get('puuid')
     
     if not app_state.is_lcu_connected():
         return jsonify({'error': 'LCU not connected'}), 400
 
     client = lcu.get_client(app_state.lcu_credentials["auth_token"], app_state.lcu_credentials["app_port"])
 
-    # 获取召唤师信息
-    full_name = f"{game_name}#{tag_line}"
-    summoner_data = client.get_summoner_by_name(full_name)
-    
+    # 获取召唤师信息（优先用 puuid 避免特殊字符/区服问题）
+    summoner_data = None
+    puuid = puuid_override
+    if puuid_override:
+        summoner_data = client.get_summoner_by_puuid(puuid_override)
+    if not summoner_data:
+        full_name = f"{game_name}#{tag_line}"
+        summoner_data = client.get_summoner_by_name(full_name)
+        puuid = summoner_data.get('puuid') if summoner_data else None
+
     if not summoner_data:
         return jsonify({'error': 'Summoner not found'}), 404
-    
-    puuid = summoner_data.get('puuid')
+
     if not puuid:
         return jsonify({'error': 'PUUID not found'}), 404
+
+    summoner_id = summoner_data.get('id') or summoner_data.get('summonerId')
     
     # 获取最近20场战绩计算胜率
     try:
@@ -328,10 +336,14 @@ def get_summoner_stats(game_name, tag_line):
         total = wins + losses
         winrate = round((wins / total * 100), 1) if total > 0 else 0
         
+        ranked_data = client.get_ranked_stats(summoner_id=summoner_id, puuid=puuid) or {}
+        queues = ranked_data.get('queues', []) if isinstance(ranked_data, dict) else []
+
         return jsonify({
             'wins': wins,
             'losses': losses,
-            'winrate': winrate
+            'winrate': winrate,
+            'queues': queues,
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500

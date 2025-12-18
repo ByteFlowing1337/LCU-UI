@@ -246,6 +246,45 @@ body {
   font-weight: 600;
 }
 
+/* Inline stats chips */
+.stat-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  color: var(--text-secondary);
+}
+
+.kda-pill {
+  padding: 4px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.streak-pill {
+  padding: 4px 10px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 12px;
+  border: 1px solid transparent;
+}
+
+.streak-win {
+  background: rgba(82, 196, 26, 0.18);
+  color: #7ee360;
+  border-color: rgba(82, 196, 26, 0.35);
+}
+
+.streak-loss {
+  background: rgba(255, 77, 79, 0.18);
+  color: #ff9a9c;
+  border-color: rgba(255, 77, 79, 0.35);
+}
+
 /* Dynamic Island */
 .dynamic-island {
   position: fixed;
