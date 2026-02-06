@@ -6,11 +6,26 @@ from flask_socketio import emit
 from config import app_state
 from services import auto_accept_task, auto_analyze_task, auto_banpick_task
 from core import lcu
+from utils.logger import logger
 
 
 # 全局检测线程，避免每次浏览器连接都重复创建
 _detect_thread = None
 _detect_thread_lock = threading.Lock()
+
+
+def _emit_lcu_status(emitter, connected=None):
+    """Emit a structured LCU status event for frontend state sync."""
+    if connected is None:
+        connected = app_state.is_lcu_connected()
+    payload = {
+        "connected": bool(connected),
+        "port": app_state.lcu_credentials.get("app_port"),
+    }
+    try:
+        emitter("lcu_status", payload)
+    except Exception:
+        pass
 
 
 class SocketIOMessageProxy:
@@ -24,6 +39,21 @@ class SocketIOMessageProxy:
         # Emit structured status: type 'lcu' for connection-related messages
         self.socketio.emit('status_update', {'type': 'lcu', 'message': message})
         print(f"[LCU连接] {message}")
+
+
+class LoggingStatusProxy:
+    """只输出到后端日志，适合在服务启动时预热 LCU 探测。"""
+
+    def __init__(self, socketio=None):
+        self.socketio = socketio
+
+    def showMessage(self, message):
+        logger.info(message)
+        if self.socketio:
+            try:
+                self.socketio.emit('status_update', {'type': 'lcu', 'message': message})
+            except Exception:
+                pass
 
 
 def register_socket_events(socketio):
@@ -41,13 +71,20 @@ def register_socket_events(socketio):
         print('浏览器客户端已连接，触发自动检测...')
         status_proxy = SocketIOMessageProxy(socketio)
         status_proxy.showMessage('已连接到本地服务器，开始自动检测LCU...')
+        ensure_lcu_detection_thread(socketio, status_proxy)
 
-        global _detect_thread
-        with _detect_thread_lock:
-            if _detect_thread is None or not _detect_thread.is_alive():
-                _detect_thread = socketio.start_background_task(_detect_and_connect_lcu, socketio, status_proxy)
-            else:
-                status_proxy.showMessage('检测线程已在运行，跳过重复启动。')
+        # 将当前 LCU 状态同步给新连接的客户端，避免前端一直显示未连接
+        if app_state.is_lcu_connected():
+            emit('status_update', {
+                'type': 'lcu',
+                'message': f"✅ LCU 连接成功！端口: {app_state.lcu_credentials.get('app_port')}。"
+            })
+        else:
+            emit('status_update', {
+                'type': 'lcu',
+                'message': '❌ LCU 未连接，正在自动检测...'
+            })
+        _emit_lcu_status(emit)
     
     @socketio.on('disconnect')
     def handle_disconnect():
@@ -254,11 +291,34 @@ def _detect_and_connect_lcu(socketio, status_proxy):
                 app_state.lcu_credentials["auth_token"] = token
                 app_state.lcu_credentials["app_port"] = port
                 status_proxy.showMessage(f"✅ LCU 连接成功！端口: {port}。")
+                _emit_lcu_status(socketio.emit, connected=True)
                 break
 
             app_state.lcu_credentials["auth_token"] = None
             app_state.lcu_credentials["app_port"] = None
             status_proxy.showMessage("❌ 连接 LCU 失败。")
+            _emit_lcu_status(socketio.emit, connected=False)
             time.sleep(3)
     finally:
         _detect_thread = None
+
+
+def ensure_lcu_detection_thread(socketio, status_proxy=None):
+    """确保探测线程已启动。可在服务启动或客户端连接时调用。"""
+    global _detect_thread
+    if status_proxy is None:
+        status_proxy = LoggingStatusProxy(socketio)
+
+    # 若已检测到 LCU 凭证，避免重复启动探测线程导致状态闪烁
+    if app_state.is_lcu_connected():
+        try:
+            status_proxy.showMessage('✅ 已连接到 LCU，跳过重复检测。')
+        except Exception:
+            pass
+        return
+
+    with _detect_thread_lock:
+        if _detect_thread is None or not _detect_thread.is_alive():
+            _detect_thread = socketio.start_background_task(_detect_and_connect_lcu, socketio, status_proxy)
+        else:
+            status_proxy.showMessage('检测线程已在运行，跳过重复启动。')

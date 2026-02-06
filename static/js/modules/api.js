@@ -24,16 +24,16 @@ export async function fetchSummonerStats(
   gameName,
   tagLine,
   displayElement,
-  count = 10
+  count = 10,
 ) {
-  const apiEndpoint = "/get_history";
+  const apiEndpoint = "/api/get_history";
   const fullRiotId = `${gameName}#${tagLine}`;
   const encodedRiotId = encodeURIComponent(fullRiotId);
 
   try {
     // 🚀 优化：队友分析时只查询10场，减少查询时间
     const response = await fetch(
-      `${apiEndpoint}?name=${encodedRiotId}&count=${count}`
+      `${apiEndpoint}?name=${encodedRiotId}&count=${count}`,
     );
 
     if (!response.ok) {
@@ -75,16 +75,16 @@ export async function fetchSummonerStats(
         winRate >= 60
           ? "text-success"
           : winRate >= 50
-          ? "text-warning"
-          : "text-danger";
+            ? "text-warning"
+            : "text-danger";
       const streakHighlight =
         streakInfo && streakInfo.count >= 3
           ? `<div class="mt-1 fw-semibold ${
               streakInfo.type === "win" ? "text-success" : "text-danger"
             }">
                         ${streakInfo.type === "win" ? "🔥 当前" : "⚠️ 当前"}${
-              streakInfo.count
-            }连${streakInfo.type === "win" ? "胜" : "败"}
+                          streakInfo.count
+                        }连${streakInfo.type === "win" ? "胜" : "败"}
                    </div>`
           : "";
 
@@ -126,15 +126,15 @@ export async function fetchTFTMatches(
   gameName,
   tagLine,
   displayElement,
-  count = 20
+  count = 20,
 ) {
-  const apiEndpoint = "/get_tft_history";
+  const apiEndpoint = "/api/get_tft_history";
   const fullRiotId = `${gameName}#${tagLine}`;
   const encodedRiotId = encodeURIComponent(fullRiotId);
 
   try {
     const response = await fetch(
-      `${apiEndpoint}?name=${encodedRiotId}&count=${count}`
+      `${apiEndpoint}?name=${encodedRiotId}&count=${count}`,
     );
     if (!response.ok) {
       throw new Error(`HTTP 错误! 状态码: ${response.status}`);
@@ -156,8 +156,8 @@ export async function fetchTFTMatches(
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <strong>${g.mode || g.gameMode}</strong> · ${
-          g.time_ago
-        }
+                              g.time_ago
+                            }
                         </div>
                         <div class="text-end">
                             <div>${g.kda}</div>

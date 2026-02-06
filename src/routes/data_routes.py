@@ -13,6 +13,16 @@ from services.opgg_service import fetch_champion_stats
 data_bp = Blueprint('data', __name__)
 
 
+@data_bp.route('/lcu_status', methods=['GET'])
+def lcu_status():
+    """Return current LCU connection state from server-side detection."""
+    connected = app_state.is_lcu_connected()
+    return jsonify({
+        "connected": connected,
+        "port": app_state.lcu_credentials.get("app_port"),
+    })
+
+
 @data_bp.route('/get_history', methods=['GET'])
 def get_history():
     """
@@ -259,7 +269,7 @@ def external_champion_stats():
         return jsonify({'success': False, 'message': str(e)}), 500
 
 
-@data_bp.route('/api/champions', methods=['GET'])
+@data_bp.route('/champions', methods=['GET'])
 def get_champions():
     """
     获取英雄ID到名称的映射
@@ -272,7 +282,7 @@ def get_champions():
     return jsonify(champion_map)
 
 
-@data_bp.route('/api/summoner_stats/<path:game_name>/<path:tag_line>', methods=['GET'])
+@data_bp.route('/summoner_stats/<path:game_name>/<path:tag_line>', methods=['GET'])
 def get_summoner_stats(game_name, tag_line):
     """
     获取召唤师的简要统计信息

@@ -64,6 +64,30 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         let socket = null;
+        let lcuStatusTimer = null;
+
+        const applyLcuConnected = (value) => {
+          if (typeof value === "boolean") {
+            lcuConnected.value = value;
+          }
+        };
+
+        const syncLcuStatus = async () => {
+          try {
+            const res = await fetch("/api/lcu_status");
+            const data = await res.json();
+            applyLcuConnected(!!data.connected);
+          } catch (err) {
+            console.warn("fetch /api/lcu_status failed", err);
+          }
+        };
+
+        const startLcuStatusPolling = () => {
+          if (lcuStatusTimer) return;
+          lcuStatusTimer = setInterval(() => {
+            syncLcuStatus();
+          }, 5000);
+        };
 
         onMounted(async () => {
           const overlay = document.getElementById("loading-overlay");
@@ -80,7 +104,7 @@ document.addEventListener("DOMContentLoaded", () => {
               label: name,
             }));
             championById.value = Object.fromEntries(
-              Object.entries(data).map(([id, name]) => [parseInt(id), name])
+              Object.entries(data).map(([id, name]) => [parseInt(id), name]),
             );
           } catch (e) {
             console.error("Failed to load champions:", e);
@@ -93,6 +117,7 @@ document.addEventListener("DOMContentLoaded", () => {
           socket.on("connect", () => {
             console.log("✅ WebSocket connected successfully");
             realtimeStatus.value = "已连接到服务器";
+            syncLcuStatus();
           });
           socket.on("connect_error", (error) => {
             console.error("❌ Socket.IO connection error:", error);
@@ -104,11 +129,45 @@ document.addEventListener("DOMContentLoaded", () => {
           });
           socket.on("status_update", (data) => {
             const msg = data.message || data.data || "";
-            if (msg.includes("成功")) lcuConnected.value = true;
-            else if (msg.includes("失败") || msg.includes("断开"))
-              lcuConnected.value = false;
+            const msgType = data.type || "biz";
+
+            console.debug("[status_update]", { msgType, msg, data });
+
+            if (typeof data.connected === "boolean") {
+              applyLcuConnected(data.connected);
+            }
+
+            // 仅当消息类型为 lcu 时才更新连接状态，避免业务失败提示误判
+            if (msgType === "lcu") {
+              const lowered = String(msg || "").toLowerCase();
+              if (
+                msg.includes("成功") ||
+                msg.includes("已连接") ||
+                msg.includes("连接成功") ||
+                lowered.includes("connected")
+              ) {
+                lcuConnected.value = true;
+              } else if (
+                msg.includes("失败") ||
+                msg.includes("未连接") ||
+                msg.includes("断开") ||
+                lowered.includes("disconnected")
+              ) {
+                lcuConnected.value = false;
+              }
+            }
+
             realtimeStatus.value = msg;
           });
+          socket.on("lcu_status", (data) => {
+            if (data && typeof data.connected === "boolean") {
+              applyLcuConnected(data.connected);
+            }
+          });
+
+          // 在页面加载时主动拉取一次 LCU 状态，防止 websocket 消息丢失
+          syncLcuStatus();
+          startLcuStatusPolling();
           socket.on("enemies_found", (data) => {
             enemies.value = data.enemies.map((e) => ({
               ...e,
@@ -119,7 +178,7 @@ document.addEventListener("DOMContentLoaded", () => {
               enemies.value[idx].stats = await fetchStats(
                 enemy.gameName,
                 enemy.tagLine,
-                enemy.puuid
+                enemy.puuid,
               );
             });
           });
@@ -133,7 +192,7 @@ document.addEventListener("DOMContentLoaded", () => {
               teammates.value[idx].stats = await fetchStats(
                 tm.gameName,
                 tm.tagLine,
-                tm.puuid
+                tm.puuid,
               );
             });
           });
@@ -151,7 +210,7 @@ document.addEventListener("DOMContentLoaded", () => {
           const encoded = encodeURIComponent(searchName.value.trim());
           try {
             const rankRes = await fetch(
-              `/api/get_summoner_rank?name=${encoded}`
+              `/api/get_summoner_rank?name=${encoded}`,
             );
             const rankJson = await rankRes.json();
             if (!rankRes.ok || !rankJson.success) {
@@ -159,7 +218,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             const historyRes = await fetch(
-              `/api/get_history?name=${encoded}&count=5&page=1`
+              `/api/get_history?name=${encoded}&count=5&page=1`,
             );
             const historyJson = await historyRes.json();
             if (!historyRes.ok || !historyJson.success) {
@@ -213,7 +272,7 @@ document.addEventListener("DOMContentLoaded", () => {
           }
           window.open(
             `/tft_summoner/${encodeURIComponent(searchName.value)}`,
-            "_blank"
+            "_blank",
           );
         };
 
@@ -229,10 +288,10 @@ document.addEventListener("DOMContentLoaded", () => {
           if (!ensureConnected()) return;
           autoAcceptRunning.value = !autoAcceptRunning.value;
           socket.emit(
-            autoAcceptRunning.value ? "start_auto_accept" : "stop_auto_accept"
+            autoAcceptRunning.value ? "start_auto_accept" : "stop_auto_accept",
           );
           antd.message.info(
-            autoAcceptRunning.value ? "自动接受已启动" : "自动接受已停止"
+            autoAcceptRunning.value ? "自动接受已启动" : "自动接受已停止",
           );
           savePreferences();
         };
@@ -243,10 +302,10 @@ document.addEventListener("DOMContentLoaded", () => {
           socket.emit(
             autoAnalyzeRunning.value
               ? "start_auto_analyze"
-              : "stop_auto_analyze"
+              : "stop_auto_analyze",
           );
           antd.message.info(
-            autoAnalyzeRunning.value ? "敌我分析已启动" : "敌我分析已停止"
+            autoAnalyzeRunning.value ? "敌我分析已启动" : "敌我分析已停止",
           );
           savePreferences();
         };
@@ -267,7 +326,7 @@ document.addEventListener("DOMContentLoaded", () => {
           antd.message.info(
             autoBanPickRunning.value
               ? "自动Ban/Pick已启动"
-              : "自动Ban/Pick已停止"
+              : "自动Ban/Pick已停止",
           );
           savePreferences();
         };
@@ -290,12 +349,12 @@ document.addEventListener("DOMContentLoaded", () => {
               fetch(
                 `/api/summoner_stats/${encodedName}/${encodedTag}${
                   queryPuuid ? `?${queryPuuid}` : ""
-                }`
+                }`,
               ),
               fetch(
                 `/get_history?name=${encodeURIComponent(
-                  `${gameName}#${tagLine}`
-                )}&count=20&page=1`
+                  `${gameName}#${tagLine}`,
+                )}&count=20&page=1`,
               ),
             ]);
 
@@ -309,7 +368,7 @@ document.addEventListener("DOMContentLoaded", () => {
               rankQueues.find((q) =>
                 String(q.queueType || q.queue || q.type || "")
                   .toUpperCase()
-                  .includes("SOLO")
+                  .includes("SOLO"),
               ) || rankQueues[0];
             const rankLabel = primaryRank
               ? `${primaryRank.tier || "Unranked"} ${
@@ -382,8 +441,8 @@ document.addEventListener("DOMContentLoaded", () => {
               totalDeaths > 0
                 ? ((totalKills + totalAssists) / totalDeaths).toFixed(2)
                 : totalKills + totalAssists > 0
-                ? "Perfect"
-                : "0";
+                  ? "Perfect"
+                  : "0";
 
             return {
               summary: `${wins}W ${losses}L (${winrate}% WR) · ${rankLabel}${lpPart}`,
@@ -408,7 +467,7 @@ document.addEventListener("DOMContentLoaded", () => {
           if (!name) return null;
           return `https://ddragon.leagueoflegends.com/cdn/15.23.1/img/champion/${name.replace(
             " ",
-            ""
+            "",
           )}.png`;
         };
 
@@ -416,11 +475,11 @@ document.addEventListener("DOMContentLoaded", () => {
           try {
             localStorage.setItem(
               "lcu_ui_ban_champions",
-              JSON.stringify(banChampions.value.filter(Boolean))
+              JSON.stringify(banChampions.value.filter(Boolean)),
             );
             localStorage.setItem(
               "lcu_ui_pick_champions",
-              JSON.stringify(pickChampions.value.filter(Boolean))
+              JSON.stringify(pickChampions.value.filter(Boolean)),
             );
           } catch {}
         };
@@ -428,10 +487,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const loadPreferences = () => {
           try {
             const bans = JSON.parse(
-              localStorage.getItem("lcu_ui_ban_champions") || "[]"
+              localStorage.getItem("lcu_ui_ban_champions") || "[]",
             );
             const picks = JSON.parse(
-              localStorage.getItem("lcu_ui_pick_champions") || "[]"
+              localStorage.getItem("lcu_ui_pick_champions") || "[]",
             );
             if (bans.length) banChampions.value = [...bans, null];
             if (picks.length) pickChampions.value = [...picks, null];

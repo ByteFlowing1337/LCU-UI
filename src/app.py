@@ -14,6 +14,7 @@ import sys
 from config import HOST, PORT, PUBLIC_HOST
 from routes import page_bp, data_bp
 from websocket import register_socket_events
+from websocket.socket_events import ensure_lcu_detection_thread, LoggingStatusProxy
 from utils import get_local_ip
 from utils.logger import logger
 
@@ -43,7 +44,8 @@ def create_app():
     
     # 注册蓝图
     app.register_blueprint(page_bp)  # 页面渲染路由
-    app.register_blueprint(data_bp)  # 数据 API 路由
+    # 数据 API 统一挂在 /api 前缀，匹配前端请求
+    app.register_blueprint(data_bp, url_prefix='/api')
     
  
     
@@ -155,10 +157,22 @@ def main():
     logger.info("Lcu UI 已启动！")
     logger.info(f"本机访问地址: http://127.0.0.1:{PORT}")
     logger.info(f"局域网访问地址: {server_address}")
+
+    # 提前启动一次 LCU 探测（即便前端尚未连接），方便诊断
+    try:
+        ensure_lcu_detection_thread(socketio, LoggingStatusProxy(socketio))
+    except Exception as exc:
+        logger.warning(f"预热 LCU 探测线程失败: {exc}")
     
-    # 启动服务器 (除非明确传入 --no-browser，否则启用调试和自动重载)
-    debug_mode = '--no-browser' not in sys.argv
-    socketio.run(app, host=HOST, port=PORT, debug=debug_mode, allow_unsafe_werkzeug=True)
+    # 启动服务器：默认关闭调试热重载，避免双进程与重复打开浏览器
+    socketio.run(
+        app,
+        host=HOST,
+        port=PORT,
+        debug=False,
+        use_reloader=False,
+        allow_unsafe_werkzeug=True
+    )
 
 
 if __name__ == '__main__':

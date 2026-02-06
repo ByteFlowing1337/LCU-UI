@@ -50,8 +50,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     },
     onStatusUpdate(data) {
       // Expect structured payload: { type: 'lcu'|'biz', message: '...' }
-      const type = data.type || (data.data ? "lcu" : "biz");
+      const type = data.type || "biz";
       const message = data.message || data.data || "";
+
+      console.debug("[status_update]", { type, message, data });
 
       if (type === "lcu") {
         // connection-related message -> update LCU status box
@@ -60,7 +62,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           setLCUStatus(message, "err");
         else setLCUStatus(message, "neutral");
       } else {
-        // business message -> realtime area
+        // business message -> realtime area; do NOT flip LCU connection state here
         showInlineMessage(message, { level: "info", timeout: 5000 });
       }
     },
@@ -85,7 +87,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         const riotIdLink = document.createElement("a");
         riotIdLink.href = `/summoner/${encodeURIComponent(
-          enemy.gameName + "#" + enemy.tagLine
+          enemy.gameName + "#" + enemy.tagLine,
         )}`;
         riotIdLink.target = "_blank";
         riotIdLink.rel = "noopener noreferrer";
@@ -144,7 +146,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         const riotIdLink = document.createElement("a");
         riotIdLink.href = `/summoner/${encodeURIComponent(
-          tm.gameName + "#" + tm.tagLine
+          tm.gameName + "#" + tm.tagLine,
         )}`;
         riotIdLink.target = "_blank";
         riotIdLink.rel = "noopener noreferrer";
@@ -177,6 +179,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.log("队友战绩分析全部完成");
     },
   });
+
+  // 页面加载时主动检查一次 LCU 状态，避免初始状态未刷新
+  fetch("/api/lcu_status")
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.connected) setLCUStatus("LCU Connected", "ok");
+    })
+    .catch((err) => console.warn("fetch /api/lcu_status failed", err));
 
   // --- UI actions ---
   fetchBtn.addEventListener("click", () => {
@@ -333,15 +343,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       localStorage.setItem(
         STORAGE_KEY_AUTO_ACCEPT,
-        autoAcceptRunning.toString()
+        autoAcceptRunning.toString(),
       );
       localStorage.setItem(
         STORAGE_KEY_AUTO_ANALYZE,
-        autoAnalyzeRunning.toString()
+        autoAnalyzeRunning.toString(),
       );
       localStorage.setItem(
         STORAGE_KEY_AUTO_BANPICK,
-        autoBanPickRunning.toString()
+        autoBanPickRunning.toString(),
       );
     } catch (e) {
       console.warn("保存自动化功能状态失败:", e);
@@ -383,7 +393,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!isLCUConnected()) {
       showInlineMessage(
         "无法启动自动接受：未检测到LCU连接，请先确保客户端已运行并且LCU已连接。",
-        { level: "error", timeout: 8000 }
+        { level: "error", timeout: 8000 },
       );
       return;
     }
@@ -415,7 +425,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!isLCUConnected()) {
       showInlineMessage(
         "无法启动敌我分析：未检测到LCU连接，请先确保客户端已运行并且LCU已连接。",
-        { level: "error", timeout: 8000 }
+        { level: "error", timeout: 8000 },
       );
       return;
     }
@@ -450,10 +460,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     const pickQueue = [];
 
     const banSelectorsContainer = document.getElementById(
-      "ban-selectors-container"
+      "ban-selectors-container",
     );
     const pickSelectorsContainer = document.getElementById(
-      "pick-selectors-container"
+      "pick-selectors-container",
     );
 
     let banSelectorIdCounter = 0;
@@ -630,10 +640,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     function loadSelectionsFromStorage() {
       try {
         const savedBanIds = JSON.parse(
-          localStorage.getItem(STORAGE_KEY_BAN) || "[]"
+          localStorage.getItem(STORAGE_KEY_BAN) || "[]",
         );
         const savedPickIds = JSON.parse(
-          localStorage.getItem(STORAGE_KEY_PICK) || "[]"
+          localStorage.getItem(STORAGE_KEY_PICK) || "[]",
         );
 
         // 为每个保存的 Ban ID 创建选择器并设置
@@ -711,7 +721,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (!isLCUConnected()) {
         showInlineMessage(
           "无法启动自动Ban/Pick：未检测到LCU连接，请先确保客户端已运行并且LCU已连接。",
-          { level: "error", timeout: 8000 }
+          { level: "error", timeout: 8000 },
         );
         return;
       }
@@ -741,7 +751,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           `自动Ban/Pick已启动 (Ban: ${banId || "未设置"}, Pick: ${
             pickId || "未设置"
           })`,
-          { level: "info" }
+          { level: "info" },
         );
         saveAutoFeatureStates();
       } else {
