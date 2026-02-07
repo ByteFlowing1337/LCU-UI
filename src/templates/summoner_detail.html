@@ -1383,11 +1383,11 @@
         try {
           let historyUrl = "";
           if (summonerPuuid && summonerPuuid.length > 0) {
-            historyUrl = `/get_history?puuid=${encodeURIComponent(
+            historyUrl = `/api/get_history?puuid=${encodeURIComponent(
               summonerPuuid
             )}&page=${page}`;
           } else {
-            historyUrl = `/get_history?name=${encodeURIComponent(
+            historyUrl = `/api/get_history?name=${encodeURIComponent(
               summonerName
             )}&page=${page}`;
           }
@@ -1443,11 +1443,11 @@
         try {
           let url = "";
           if (summonerPuuid && summonerPuuid.length > 0) {
-            url = `/get_summoner_rank?puuid=${encodeURIComponent(
+            url = `/api/get_summoner_rank?puuid=${encodeURIComponent(
               summonerPuuid
             )}`;
           } else if (summonerName) {
-            url = `/get_summoner_rank?name=${encodeURIComponent(summonerName)}`;
+            url = `/api/get_summoner_rank?name=${encodeURIComponent(summonerName)}`;
           } else {
             return;
           }

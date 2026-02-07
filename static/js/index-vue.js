@@ -338,11 +338,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const fetchStats = async (gameName, tagLine, puuid) => {
           try {
-            const encodedName = encodeURIComponent(gameName);
-            const encodedTag = encodeURIComponent(tagLine);
+            const safeGameName = gameName || "unknown";
+            const safeTagLine = tagLine || "unknown";
+            const encodedName = encodeURIComponent(safeGameName);
+            const encodedTag = encodeURIComponent(safeTagLine);
             const queryPuuid = puuid
               ? `puuid=${encodeURIComponent(puuid)}`
               : "";
+            const historyParams = new URLSearchParams();
+            if (puuid) {
+              historyParams.set("puuid", puuid);
+            } else if (gameName && tagLine) {
+              historyParams.set("name", `${gameName}#${tagLine}`);
+            } else if (gameName) {
+              historyParams.set("name", gameName);
+            }
+            historyParams.set("count", "20");
+            historyParams.set("page", "1");
 
             // 并行获取：段位信息 + 最近20场战绩
             const [rankRes, histRes] = await Promise.all([
@@ -352,14 +364,27 @@ document.addEventListener("DOMContentLoaded", () => {
                 }`,
               ),
               fetch(
-                `/get_history?name=${encodeURIComponent(
-                  `${gameName}#${tagLine}`,
-                )}&count=20&page=1`,
+                `/api/get_history?${historyParams.toString()}`,
               ),
             ]);
 
-            const rankJson = await rankRes.json();
-            const histJson = await histRes.json();
+            const safeJson = async (res) => {
+              try {
+                return await res.json();
+              } catch (err) {
+                console.warn("Failed to parse JSON response", err);
+                return null;
+              }
+            };
+
+            const [rankJson, histJson] = await Promise.all([
+              safeJson(rankRes),
+              safeJson(histRes),
+            ]);
+
+            if (!rankJson && !histJson) {
+              throw new Error("Stats API response invalid");
+            }
 
             const rankQueues = Array.isArray(rankJson?.queues)
               ? rankJson.queues
