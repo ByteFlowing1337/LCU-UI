@@ -9,12 +9,20 @@ from utils.logger import logger
 
 PUUID_CACHE_TTL = 600
 MAX_PUUID_CACHE_SIZE = 200
+BIDI_CONTROL_PATTERN = re.compile(r'[\u200e\u200f\u202a-\u202e\u2066-\u2069]')
 
 
 class SummonerAPI:
     def __init__(self, client):
         self.client = client
         self._puuid_cache = {}
+
+    @staticmethod
+    def _sanitize_summoner_name(name):
+        if not isinstance(name, str):
+            return name
+        cleaned = re.sub(BIDI_CONTROL_PATTERN, '', name)
+        return cleaned.strip()
 
     def _clean_puuid_cache(self):
         """清理过期和过量缓存。"""
@@ -35,15 +43,17 @@ class SummonerAPI:
         """通过召唤师名字获取 PUUID，带缓存。"""
         self._clean_puuid_cache()
 
-        if summoner_name in self._puuid_cache:
-            cached_time, cached_puuid = self._puuid_cache[summoner_name]
+        cleaned_name = self._sanitize_summoner_name(summoner_name)
+        if not cleaned_name:
+            return None
+
+        if cleaned_name in self._puuid_cache:
+            cached_time, cached_puuid = self._puuid_cache[cleaned_name]
             if time.time() - cached_time < PUUID_CACHE_TTL:
-                logger.debug(f"✅ 使用PUUID缓存 ({summoner_name})")
+                logger.debug(f"✅ 使用PUUID缓存 ({cleaned_name})")
                 return cached_puuid
 
         endpoint = "/lol-summoner/v1/summoners"
-        clean_pattern = re.compile(r'[\u200e-\u200f\u202a-\u202e\u2066-\u2069]')
-        cleaned_name = re.sub(clean_pattern, '', summoner_name).strip()
 
         data = self.client.request(
             "GET",
@@ -54,8 +64,8 @@ class SummonerAPI:
         if data:
             puuid = data.get('puuid')
             if puuid:
-                self._puuid_cache[summoner_name] = (time.time(), puuid)
-                logger.debug(f"✅ 查询PUUID成功 ({summoner_name})")
+                self._puuid_cache[cleaned_name] = (time.time(), puuid)
+                logger.debug(f"✅ 查询PUUID成功 ({cleaned_name})")
             return puuid
         return None
 
@@ -69,7 +79,10 @@ class SummonerAPI:
 
     def get_summoner_by_name(self, name):
         endpoint = "/lol-summoner/v1/summoners"
-        return self.client.request("GET", endpoint, params={'name': name})
+        cleaned_name = self._sanitize_summoner_name(name)
+        if not cleaned_name:
+            return None
+        return self.client.request("GET", endpoint, params={'name': cleaned_name})
 
     @staticmethod
     def _normalize_ranked_payload(payload, endpoint_tag):

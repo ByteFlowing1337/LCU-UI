@@ -69,6 +69,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const applyLcuConnected = (value) => {
           if (typeof value === "boolean") {
             lcuConnected.value = value;
+            if (value) {
+              stopLcuStatusPolling();
+            } else {
+              startLcuStatusPolling();
+            }
           }
         };
 
@@ -83,10 +88,16 @@ document.addEventListener("DOMContentLoaded", () => {
         };
 
         const startLcuStatusPolling = () => {
-          if (lcuStatusTimer) return;
+          if (lcuStatusTimer || lcuConnected.value) return;
           lcuStatusTimer = setInterval(() => {
             syncLcuStatus();
           }, 5000);
+        };
+
+        const stopLcuStatusPolling = () => {
+          if (!lcuStatusTimer) return;
+          clearInterval(lcuStatusTimer);
+          lcuStatusTimer = null;
         };
 
         onMounted(async () => {
@@ -146,14 +157,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 msg.includes("连接成功") ||
                 lowered.includes("connected")
               ) {
-                lcuConnected.value = true;
+                applyLcuConnected(true);
               } else if (
                 msg.includes("失败") ||
                 msg.includes("未连接") ||
                 msg.includes("断开") ||
                 lowered.includes("disconnected")
               ) {
-                lcuConnected.value = false;
+                applyLcuConnected(false);
               }
             }
 
