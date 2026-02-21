@@ -8,12 +8,23 @@ class GameFlowAPI:
     def __init__(self, client):
         self.client = client
 
+    def create_lobby(self):
+        return self.client.request("POST", "/lol-lobby/v2/lobby")
+    def start_matchmaking(self, queue_id):
+        payload = {
+            "queueId": queue_id,
+            "isCustom": False
+        }
+        return self.client.request("POST", "/lol-matchmaking/v1/search", json=payload)
     def get_gameflow_phase(self):
         return self.client.request("GET", "/lol-gameflow/v1/gameflow-phase")
 
     def accept_ready_check(self):
         return self.client.request("POST", "/lol-matchmaking/v1/ready-check/accept")
 
+    def decline_ready_check(self):
+        return self.client.request("DELETE", "/lol-lobby/v2/lobby/matchmaking/search")
+    
     def get_champ_select_session(self):
         return self.client.request("GET", "/lol-champ-select/v1/session")
 

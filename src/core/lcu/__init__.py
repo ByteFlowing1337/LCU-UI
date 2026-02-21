@@ -113,7 +113,11 @@ class LCU:
     def enrich_tft_game_with_summoner_info(self, game):
         return self.enrichment.enrich_tft_game_with_summoner_info(game)
 
-
+    def create_lobby(self):
+        return self.game_flow.create_lobby()
+    
+    def start_matchmaking(self, queue_id):
+        return self.game_flow.start_matchmaking(queue_id)
 _active_client = None
 
 

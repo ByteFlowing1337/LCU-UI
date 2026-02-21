@@ -4,7 +4,7 @@ WebSocket事件处理模块
 import threading
 from flask_socketio import emit
 from config import app_state
-from services import auto_accept_task, auto_analyze_task, auto_banpick_task
+from core.services import auto_accept_task, auto_analyze_task, auto_banpick_task
 from core import lcu
 from utils.logger import logger
 
