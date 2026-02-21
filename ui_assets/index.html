@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LCU UI - Starting...</title>
+    <title>Starting...</title>
     <style>
         body {
             background-color: #121212;
@@ -62,8 +62,8 @@
 
     <script>
         const TARGET_URL = 'http://127.0.0.1:5000/';
-        const RETRY_INTERVAL = 500; // 500ms
-        const MAX_RETRIES = 60; // 30 seconds max
+        const RETRY_INTERVAL = 50; // 50ms
+        const MAX_RETRIES = 600; // 30 seconds max
         let retries = 0;
 
         function checkServer() {
