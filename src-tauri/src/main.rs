@@ -58,7 +58,7 @@ fn spawn_backend<R: Runtime>(_app: &tauri::AppHandle<R>) {
             }
              // Fallback to venv
             let _ = StdCommand::new("..\\.venv\\Scripts\\python.exe")
-                .args(["app.py", "--no-browser"])
+                .args(["main.py", "--no-browser"])
                 .spawn();
         }
     }

@@ -1,5 +1,5 @@
 """
-LOLHelper WebUI 主入口文件
+The entrance of the application.
 
 """
 from flask import Flask

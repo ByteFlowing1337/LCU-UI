@@ -70,7 +70,7 @@ cd LCU-UI
 uv sync
 
 # Run the application
-uv run src/app.py
+uv run src/main.py
 ```
 
 ### Installation with pip
@@ -88,7 +88,7 @@ python -m venv .venv
 pip install -e .
 
 # Run the application
-python src/app.py
+python src/main.py
 ```
 
 ---
@@ -99,10 +99,10 @@ python src/app.py
 
 ```powershell
 # With uv
-uv run python src/app.py
+uv run python src/main.py
 
 # Or with Python directly
-python src/app.py
+python src/main.py
 ```
 
 The server will automatically:
@@ -139,7 +139,7 @@ LCU-UI/
 ├── pyproject.toml         # Project metadata and dependencies
 ├── uv.lock                # uv lockfile for reproducible installs
 ├── src/                   # Python package root
-│   ├── app.py             # Flask entrypoint
+│   ├── main.py             # Flask entrypoint
 │   ├── config.py          # Configuration and app state
 │   ├── constants.py       # Game constants and data loaders
 │   ├── core/              # LCU integration (HTTP client, game flow, summoner, etc.)

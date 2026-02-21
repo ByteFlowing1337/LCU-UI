@@ -13,7 +13,7 @@ if (-not (Test-Path $pyinstaller)) {
     # Fallback to PATH-resolved pyinstaller if .venv path is unavailable (e.g., CI)
     $pyinstaller = "pyinstaller"
 }
-$entry       = Join-Path $srcDir "app.py"
+$entry       = Join-Path $srcDir "main.py"
 $templates   = Join-Path $srcDir "templates"
 $staticRoot  = Join-Path $repoRoot "static"
 

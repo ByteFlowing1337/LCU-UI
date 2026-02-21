@@ -1,6 +1,6 @@
 {
   "build": {
-    "beforeDevCommand": ".venv\\\\Scripts\\\\python.exe app.py --no-browser",
+    "beforeDevCommand": ".venv\\\\Scripts\\\\python.exe main.py --no-browser",
     "beforeBuildCommand": "",
     "devPath": "http://localhost:5000",
     "distDir": "../ui_assets",
