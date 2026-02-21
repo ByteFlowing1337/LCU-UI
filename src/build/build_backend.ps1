@@ -5,25 +5,54 @@ $ErrorActionPreference = "Stop"
 
 # Resolve paths relative to repo root
 $scriptDir = Split-Path -Parent $PSCommandPath       # .../src/build
-$srcDir    = Split-Path -Parent $scriptDir            # .../src
-$repoRoot  = Split-Path -Parent $srcDir               # repo root
+$srcDir    = Split-Path -Parent $scriptDir           # .../src
+$repoRoot  = Split-Path -Parent $srcDir              # repo root
 
-$pyinstaller = Join-Path $repoRoot ".venv/Scripts/pyinstaller.exe"
-if (-not (Test-Path $pyinstaller)) {
-    # Fallback to PATH-resolved pyinstaller if .venv path is unavailable (e.g., CI)
-    $pyinstaller = "pyinstaller"
-}
 $entry       = Join-Path $srcDir "main.py"
 $templates   = Join-Path $srcDir "templates"
 $staticRoot  = Join-Path $repoRoot "static"
+$venvPython  = Join-Path $repoRoot ".venv\Scripts\python.exe"
 
-Write-Host "Building backend with PyInstaller..."
-& $pyinstaller -F $entry -n desktop_main `
-  --add-data "$templates;templates" `
-  --add-data "$staticRoot;static" `
-  --hidden-import "engineio.async_drivers.threading" `
-  --hidden-import "flask_socketio" `
-  --clean --noconfirm
+if (Test-Path $venvPython) {
+    $python = $venvPython
+} else {
+    $pythonCommand = Get-Command python -ErrorAction SilentlyContinue
+    if ($pythonCommand) {
+        $python = $pythonCommand.Source
+    } else {
+        Write-Host "Error: Python was not found. Create .venv or ensure python is on PATH."
+        exit 1
+    }
+}
+
+# Use module invocation so the build does not rely on a pyinstaller.exe shim being present.
+& $python -c "import PyInstaller" 2>$null | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Error: PyInstaller is not installed for '$python'."
+    Write-Host "Install it with one of:"
+    Write-Host "  `"$python`" -m pip install pyinstaller"
+    Write-Host "  uv pip install --python `"$python`" pyinstaller"
+    exit 1
+}
+
+$pyInstallerArgs = @(
+    "-m", "PyInstaller",
+    "-F", $entry,
+    "-n", "desktop_main",
+    "--add-data", "$templates;templates",
+    "--add-data", "$staticRoot;static",
+    "--hidden-import", "engineio.async_drivers.threading",
+    "--hidden-import", "flask_socketio",
+    "--clean",
+    "--noconfirm"
+)
+
+Write-Host "Building backend with PyInstaller using $python..."
+& $python @pyInstallerArgs
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Error: PyInstaller build failed with exit code $LASTEXITCODE."
+    exit $LASTEXITCODE
+}
 
 # Move and rename for Tauri sidecar
 $TARGET_DIR = Join-Path $repoRoot "src-tauri/binaries"

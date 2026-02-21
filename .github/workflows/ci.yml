@@ -51,7 +51,7 @@ jobs:
           uv run python -c "
           import sys
           sys.path.insert(0, 'src')
-          from app import create_app
+          from main import create_app
           app, socketio = create_app()
           print('✅ Flask app created successfully')
           print(f'   Registered blueprints: {[bp.name for bp in app.blueprints.values()]}')
