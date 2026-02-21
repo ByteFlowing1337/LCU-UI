@@ -120,38 +120,8 @@ def main():
     if "--no-browser" not in sys.argv:
         open_browser_when_ready(server_address, host=display_host, port=PORT, timeout=10)
 
-    # 注册信号处理器：在接收到退出信号时，通知前端并退出
-    def _shutdown_handler(signum, frame):
-        try:
-            logger.info(f"收到退出信号 ({signum})，正在通知前端并退出...")
-            # 广播一个 server_shutdown 事件，前端监听后会尝试关闭窗口
-            try:
-                # 广播到所有已连接客户端（不指定 room）
-                socketio.emit('server_shutdown', {'reason': 'server_exit'})
-            except Exception:
-                # 在一些环境下 emit 可能失败 during shutdown
-                pass
-            # 给浏览器一点时间来接收事件并处理
-            time.sleep(0.35)
-        finally:
-            # 强制退出进程
-            try:
-                # 尝试优雅退出
-                sys.exit(0)
-            except SystemExit:
-                os._exit(0)
 
-    # Register signals (cross-platform best-effort)
-    signal.signal(signal.SIGINT, _shutdown_handler)
-    try:
-        signal.signal(signal.SIGTERM, _shutdown_handler)
-    except Exception:
-        pass
-    try:
-        # Windows: handle Ctrl+Break
-        signal.signal(signal.SIGBREAK, _shutdown_handler)
-    except Exception:
-        pass
+
 
     # 输出启动信息
     logger.info("Lcu UI 已启动！")

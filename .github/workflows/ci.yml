@@ -39,7 +39,7 @@ jobs:
           from constants import get_champion_map
           from core import lcu
           from routes import page_bp, data_bp
-          from services import auto_accept, auto_analyze, auto_banpick
+          from core.services import auto_accept, auto_analyze, auto_banpick
           from websocket import register_socket_events
           from utils import get_local_ip
 

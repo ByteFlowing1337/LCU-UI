@@ -23,7 +23,7 @@ def index():
         try:
             token = app_state.lcu_credentials["auth_token"]
             port = app_state.lcu_credentials["app_port"]
-            client = lcu.get_client(token, port)
+            client = lcu.get_client()
             
             # 获取当前登录的召唤师信息
             current_summoner_data = client.get_current_summoner()
@@ -227,7 +227,7 @@ def summoner_detail(summoner_name):
     if app_state.is_lcu_connected():
         token = app_state.lcu_credentials["auth_token"]
         port = app_state.lcu_credentials["app_port"]
-        client = lcu.get_client(token, port)
+        client = lcu.get_client()
 
         summoner_data = None
         if puuid:
@@ -308,7 +308,7 @@ def tft_summoner_detail(summoner_name):
     if app_state.is_lcu_connected():
         token = app_state.lcu_credentials["auth_token"]
         port = app_state.lcu_credentials["app_port"]
-        client = lcu.get_client(token, port)
+        client = lcu.get_client()
         if puuid:
             summoner_data = client.get_summoner_by_puuid(puuid)
             if summoner_data:
@@ -365,7 +365,7 @@ def page_get_summoner_rank():
     puuid = request.args.get('puuid')
     token = app_state.lcu_credentials["auth_token"]
     port = app_state.lcu_credentials["app_port"]
-    client = lcu.get_client(token, port)
+    client = lcu.get_client()
 
     summoner_data = None
     if puuid:

@@ -340,7 +340,7 @@ def get_match_detail(token, port, summoner_name, index, match_id=None, is_tft=Fa
         ValueError: 参数错误
         RuntimeError: LCU 连接或查询失败
     """
-    client = lcu.get_client(token, port)
+    client = lcu.get_client()
 
     # 如果有 match_id，直接通过 match_id 查询（仅支持 LOL）
     if match_id and not is_tft:

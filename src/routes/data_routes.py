@@ -6,8 +6,8 @@ from flask import Blueprint, request, jsonify
 
 from config import app_state
 from core import lcu
-from services.match_service import process_lol_match_history, process_single_tft_game, get_match_detail
-from services.opgg_service import fetch_champion_stats
+from core.services.match_service import process_lol_match_history, process_single_tft_game, get_match_detail
+from core.services.opgg_service import fetch_champion_stats
 
 # 创建数据 API 蓝图
 data_bp = Blueprint('data', __name__)
@@ -56,7 +56,7 @@ def get_history():
     # 获取PUUID（若客户端未直接提供）
     token = app_state.lcu_credentials["auth_token"]
     port = app_state.lcu_credentials["app_port"]
-    client = lcu.get_client(token, port)
+    client = lcu.get_client()
     if not puuid:
         puuid = client.get_puuid(summoner_name)
         if not puuid:
@@ -123,7 +123,7 @@ def get_tft_history():
 
     token = app_state.lcu_credentials["auth_token"]
     port = app_state.lcu_credentials["app_port"]
-    client = lcu.get_client(token, port)
+    client = lcu.get_client()
     if not puuid:
         puuid = client.get_puuid(summoner_name)
         if not puuid:
@@ -182,7 +182,7 @@ def get_summoner_rank():
         return jsonify({"success": False, "message": "未连接到客户端"}), 400
 
     # 获取基础召唤师信息
-    client = lcu.get_client(app_state.lcu_credentials["auth_token"], app_state.lcu_credentials["app_port"])
+    client = lcu.get_client()
     if puuid:
         summoner_data = client.get_summoner_by_puuid(puuid)
     else:
@@ -302,7 +302,7 @@ def get_summoner_stats(game_name, tag_line):
     if not app_state.is_lcu_connected():
         return jsonify({'error': 'LCU not connected'}), 400
 
-    client = lcu.get_client(app_state.lcu_credentials["auth_token"], app_state.lcu_credentials["app_port"])
+    client = lcu.get_client()
 
     # 获取召唤师信息（优先用 puuid 避免特殊字符/区服问题）
     summoner_data = None

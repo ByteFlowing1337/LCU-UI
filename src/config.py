@@ -4,6 +4,9 @@
 """
 
 # Flask 配置
+from src.core import lcu
+
+
 HOST = '0.0.0.0'
 PORT = 5000
 # 可选：用于在启动时在浏览器中打开的主机地址（覆盖自动检测）
@@ -54,6 +57,10 @@ class AppState:
     def is_lcu_connected(self):
         """检查LCU是否连接"""
         return self.lcu_credentials["auth_token"] is not None
+    def is_client_queueing(self):
+        """检查当前是否处于排队阶段"""
+        phase = lcu.get_client().get_gameflow_phase()
+        return phase == "Matchmaking"
 
 # 创建全局状态实例
 app_state = AppState()

@@ -34,7 +34,7 @@ from .game_flow import GameFlowAPI
 from .match_history import MatchHistoryAPI
 from .live_client import LiveClientAPI
 from .enrichment import EnrichmentService, enrich_game_with_augments
-
+from config import AppState
 
 class LCU:
     """聚合型 LCU 入口，内部复用单一 LCUClient。"""
@@ -68,6 +68,19 @@ class LCU:
 
     # 游戏流程
     def get_gameflow_phase(self):
+        """获取当前游戏流程阶段
+           - None - default, when nothing is happening
+           - Lobby
+           - Matchmaking - in queue
+           - ReadyCheck - ready pop-up
+           - ChampSelect
+           - GameStart - between champ select ending and .exe starting
+           - InProgress - in game
+           - TerminatedInError - when game ends unexpectedly, this happens for example when you exit practice tool
+           - WaitingForStats - between game ending and stats screen
+           - PreEndOfGame - honor screen and first stage with LP gained
+           - EndOfGame - post game view with all players, items, K/D/A etc
+        """
         return self.game_flow.get_gameflow_phase()
 
     def accept_ready_check(self):
@@ -104,8 +117,9 @@ class LCU:
 _active_client = None
 
 
-def get_client(token, port):
+def get_client():
     """获取全局唯一 LCU 实例；token/port 变化时自动重建。"""
+    token, port = AppState.lcu_credentials["auth_token"], AppState.lcu_credentials["app_port"]
     global _active_client
     if _active_client is None or _active_client.client.token != token or _active_client.client.port != port:
         _active_client = LCU(token, port)

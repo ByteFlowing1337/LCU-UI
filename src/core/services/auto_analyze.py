@@ -80,7 +80,7 @@ def auto_analyze_task(socketio):
             try:
                 token = app_state.lcu_credentials["auth_token"]
                 port = app_state.lcu_credentials["app_port"]
-                client = lcu.get_client(token, port)
+                client = lcu.get_client()
 
                 phase = client.get_gameflow_phase()
 
