@@ -20,7 +20,7 @@ def auto_accept_task(socketio):
     phase = client.get_gameflow_phase()
 
     # 循环监测游戏流程阶段，直到进入 Ban/Pick 阶段或自动接受被禁用
-    while phase != "ChampSelect" and phase == "Matchmaking" and app_state.auto_accept_enabled:
+    while phase != "ChampSelect" and app_state.auto_accept_enabled:
         # 如果离开了 ReadyCheck 阶段，重置接受标志
         if phase != "ReadyCheck":
             accepted_this_phase = False
