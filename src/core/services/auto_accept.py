@@ -19,8 +19,8 @@ def auto_accept_task(socketio):
     client = lcu.get_client()
     phase = client.get_gameflow_phase()
 
-    # 循环监测游戏流程阶段，直到进入 Ban/Pick 阶段或自动接受被禁用
-    while phase != "ChampSelect" and app_state.auto_accept_enabled:
+    # 循环监测游戏流程阶段
+    while app_state.auto_accept_enabled:
         # 如果离开了 ReadyCheck 阶段，重置接受标志
         if phase != "ReadyCheck":
             accepted_this_phase = False
@@ -31,11 +31,5 @@ def auto_accept_task(socketio):
                 socketio.emit('status_update', {'type': 'biz', 'message': '✅ 已自动接受对局!'})
                 logger.info("✅ 自动接受对局成功")
                 accepted_this_phase = True
-
-        if phase == "InProgress":
-            app_state.auto_accept_thread = None
-            app_state.auto_accept_enabled = False
-            logger.info("🛑 自动接受任务已退出")
-
         time.sleep(1)
         phase = client.get_gameflow_phase()
