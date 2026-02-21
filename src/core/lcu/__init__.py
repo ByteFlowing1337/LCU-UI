@@ -34,7 +34,6 @@ from .game_flow import GameFlowAPI
 from .match_history import MatchHistoryAPI
 from .live_client import LiveClientAPI
 from .enrichment import EnrichmentService, enrich_game_with_augments
-from config import AppState
 
 class LCU:
     """聚合型 LCU 入口，内部复用单一 LCUClient。"""
@@ -123,7 +122,10 @@ _active_client = None
 
 def get_client():
     """获取全局唯一 LCU 实例；token/port 变化时自动重建。"""
-    token, port = AppState.lcu_credentials["auth_token"], AppState.lcu_credentials["app_port"]
+    # Delay import to avoid circular import while config initializes.
+    from config import app_state
+
+    token, port = app_state.lcu_credentials["auth_token"], app_state.lcu_credentials["app_port"]
     global _active_client
     if _active_client is None or _active_client.client.token != token or _active_client.client.port != port:
         _active_client = LCU(token, port)

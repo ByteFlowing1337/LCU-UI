@@ -4,7 +4,6 @@
 """
 
 # Flask 配置
-from src.core import lcu
 
 
 HOST = '0.0.0.0'
@@ -59,6 +58,8 @@ class AppState:
         return self.lcu_credentials["auth_token"] is not None
     def is_client_queueing(self):
         """检查当前是否处于排队阶段"""
+        # Delay import to avoid config<->lcu circular import at module load.
+        from core import lcu
         phase = lcu.get_client().get_gameflow_phase()
         return phase == "Matchmaking"
 
